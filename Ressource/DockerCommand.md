@@ -34,6 +34,7 @@ Effacer des images/container dans le caches
     sudo docker rm "name"/"id" 
 
 
+
 ## Docker Compose
 
 Il faut creer un fichier docker-compose.yml comme clui ci par exemple : 
@@ -60,3 +61,8 @@ Rajouter build permet de build le DockerFile
 Arrete le docker-compose :
 
     sudo docker-compose down
+
+
+Execute un bash sur un contenaire en route  :
+
+    sudo docker exec -it contenaire-id bash

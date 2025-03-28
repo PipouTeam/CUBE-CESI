@@ -11,8 +11,9 @@ session_start();
 /**
  * Composer
  */
-require dirname(__DIR__) . '/vendor/autoload.php';
 
+// require dirname(__DIR__) . '/vendor/autoload.php';
+require '/var/www/project/vendor/autoload.php';
 
 /**
  * Error and Exception handling
@@ -43,6 +44,7 @@ $router->add('{controller}/{action}');
 try {
     $router->dispatch($_SERVER['QUERY_STRING']);
 } catch(Exception $e){
+    echo("erreur dabord" . $e);
     switch($e->getMessage()){
         case 'You must be logged in':
             header('Location: /login');
