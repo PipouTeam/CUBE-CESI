@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        GITHUB_REPO: https://github.com/PipouTeam/CUBE-CESI.git
+        GITHUB_BRANCH: ${GITHUB_BRANCH:-main}
     container_name: php82-Cube
     ports:
       - "8000:80"
