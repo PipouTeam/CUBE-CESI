@@ -63,6 +63,14 @@ Arrete le docker-compose :
     sudo docker-compose down
 
 
+Rajouter build permet de build via le docker-compose.dev
+
+    sudo docker compose -f docker-compose.dev.yml up --build
+
+Arrete le docker-compose  via le docker-compose.dev:
+
+    udo docker compose -f docker-compose.dev.yml down
+
 Execute un bash sur un contenaire en route  :
 
     sudo docker exec -it contenaire-id bash
