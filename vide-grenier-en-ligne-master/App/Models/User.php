@@ -19,16 +19,33 @@ class User extends Model {
     public static function createUser($data) {
         $db = static::getDB();
 
-        $stmt = $db->prepare('INSERT INTO users(username, email, password, salt) VALUES (:username, :email, :password,:salt)');
+        try {
+            // AK : Ajout d'une sécurité champ vide
 
-        $stmt->bindParam(':username', $data['username']);
-        $stmt->bindParam(':email', $data['email']);
-        $stmt->bindParam(':password', $data['password']);
-        $stmt->bindParam(':salt', $data['salt']);
+            $requiredFields = ['username', 'email', 'password', 'salt'];
 
-        $stmt->execute();
+            foreach ($requiredFields as $field) {
+                if (empty($data[$field])) {
+                    throw new \Exception("Le champ '$field' est requis.");
+                }
+            }
 
-        return $db->lastInsertId();
+            $stmt = $db->prepare('INSERT INTO users(username, email, password, salt) VALUES (:username, :email, :password,:salt)');
+
+
+            $stmt->bindParam(':username', $data['username']);
+            $stmt->bindParam(':email', $data['email']);
+            $stmt->bindParam(':password', $data['password']);
+            $stmt->bindParam(':salt', $data['salt']);
+
+            $stmt->execute();
+
+            return $db->lastInsertId();
+        }
+        catch(\Exception $e) {
+            \App\Utility\Flash::danger($e->getMessage());
+            return false;
+        }
     }
 
     public static function getByLogin($login)

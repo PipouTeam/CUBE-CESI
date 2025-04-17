@@ -42,24 +42,30 @@ class User extends \Core\Controller
      */
     public function registerAction()
     {
-        if(isset($_POST['submit'])){
+        if (isset($_POST['submit'])) {
             $f = $_POST;
 
-            if($f['password'] !== $f['password-check']){
-                // TODO: Gestion d'erreur côté utilisateur
+            if ($f['password'] !== $f['password-check']) {
+                \App\Utility\Flash::danger("Les mots de passe ne correspondent pas.");
+            } else {
+                if ($this->register($f)) {
+                    $this->login($f);
+                    header('Location: /account');
+                    exit;
+                }
             }
-
-            // validation
-
-            $this->register($f);
-            // Fred : Connexion automatique après la création du compte
-            $this->login($f);
-            // Si login OK, redirige vers le compte
-            header('Location: /account');
         }
 
-        View::renderTemplate('User/register.html');
+        // Affichage de la page, avec éventuel message d'erreur
+        $error = \App\Utility\Flash::getError();
+
+        View::renderTemplate('User/register.html', [
+            'flash' => [
+                'danger' => $error
+            ]
+        ]);
     }
+
 
     /**
      * Affiche la page du compte
@@ -95,6 +101,7 @@ class User extends \Core\Controller
         } catch (Exception $ex) {
             // TODO : Set flash if error : utiliser la fonction en dessous
             /* Utility\Flash::danger($ex->getMessage());*/
+            return false;
         }
     }
 
