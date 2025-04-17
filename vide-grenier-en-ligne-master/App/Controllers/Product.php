@@ -15,32 +15,34 @@ class Product extends \Core\Controller
     /**
      * Affiche la page d'ajout
      * @return void
+     * @throws \Exception
      */
     public function indexAction()
     {
-
-        if(isset($_POST['submit'])) {
-
+        if (isset($_POST['submit'])) {
             try {
-                $f = $_POST;
+                // AK : vérification si il y a une image avant de POST
+                $pictureName = Upload::uploadFile($_FILES['picture'], uniqid());
 
-                // TODO: Validation
+                $f = $_POST;
 
                 $f['user_id'] = $_SESSION['user']['id'];
                 $id = Articles::save($f);
 
-                $pictureName = Upload::uploadFile($_FILES['picture'], $id);
-
                 Articles::attachPicture($id, $pictureName);
 
                 header('Location: /product/' . $id);
-            } catch (\Exception $e){
-                    var_dump($e);
+                exit;
+
+            } catch (\Exception $e) {
+                // Gestion de l'erreur : log, affichage, redirection...
+                echo 'Erreur : ' . $e->getMessage();
             }
         }
 
         View::renderTemplate('Product/Add.html');
     }
+
 
     /**
      * Affiche la page d'un produit

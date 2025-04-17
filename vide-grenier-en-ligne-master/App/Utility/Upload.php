@@ -22,7 +22,11 @@ class Upload {
 
         $uploadPath = $currentDirectory . $uploadDirectory . $pictureName;
 
-        if (!in_array($fileExtension, $fileExtensionsAllowed)) {
+        if($fileSize === 0) {
+            throw new \Exception("File missing. Please upload a JPEG of PNG file.");
+        }
+
+        else if (!in_array($fileExtension, $fileExtensionsAllowed)) {
             throw new \Exception("This file extension is not allowed. Please upload a JPEG or PNG file");
         }
 
