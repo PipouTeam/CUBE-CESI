@@ -74,3 +74,7 @@ Arrete le docker-compose  via le docker-compose.dev:
 Execute un bash sur un contenaire en route  :
 
     sudo docker exec -it contenaire-id bash
+
+Supprimer toutes les containers arrêtés et les images non utilisées par un container
+
+sudo docker container prune -f && sudo docker image prune -a -f 

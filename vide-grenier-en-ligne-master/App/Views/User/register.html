@@ -62,4 +62,12 @@
         </div>
     </div>
 </div>
+
+{% if flash.danger is defined and flash.danger %}
+<div class="alert alert-danger">
+    {{ flash.danger }}
+</div>
+{% endif %}
+
+
 {% endblock %}
