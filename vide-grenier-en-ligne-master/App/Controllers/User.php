@@ -26,15 +26,21 @@ class User extends \Core\Controller
         if(isset($_POST['submit'])){
             $f = $_POST;
 
-            // TODO: Validation
-
-            $this->login($f);
-
-            // Si login OK, redirige vers le compte
-            header('Location: /account');
+            //AK : ajout de la validation login et mdp
+            if ($this->login($f)) {
+                header('Location: /account');
+                exit;
+            }
         }
 
-        View::renderTemplate('User/login.html');
+        $error = \App\Utility\Flash::getError();
+
+        View::renderTemplate('User/login.html', [
+            'flash' => [
+                'danger' => $error
+            ]
+        ]);
+
     }
 
     /**
@@ -44,6 +50,8 @@ class User extends \Core\Controller
     {
         if (isset($_POST['submit'])) {
             $f = $_POST;
+
+            //AK : Ajout vérification mot de passe
 
             if ($f['password'] !== $f['password-check']) {
                 \App\Utility\Flash::danger("Les mots de passe ne correspondent pas.");
@@ -56,7 +64,7 @@ class User extends \Core\Controller
             }
         }
 
-        // Affichage de la page, avec éventuel message d'erreur
+
         $error = \App\Utility\Flash::getError();
 
         View::renderTemplate('User/register.html', [
@@ -98,41 +106,49 @@ class User extends \Core\Controller
 
             return $userID;
 
+        // AK : Ajout des messages d'erreur avec Flash
+
         } catch (Exception $ex) {
-            // TODO : Set flash if error : utiliser la fonction en dessous
-            /* Utility\Flash::danger($ex->getMessage());*/
+            \App\Utility\Flash::danger($ex->getMessage());
             return false;
         }
     }
 
-    private function login($data){
+    private function login($data) {
         try {
-            if(!isset($data['email'])){
-                throw new Exception('TODO');
+
+            //AK : gestion des erreurs et ajout des messages Flash
+
+            if (empty($data['email']) || empty($data['password'])) {
+                throw new \Exception("Email et mot de passe requis.");
             }
 
             $user = \App\Models\User::getByLogin($data['email']);
 
-            if (Hash::generate($data['password'], $user['salt']) !== $user['password']) {
-                return false;
+            if (!$user) {
+                throw new \Exception("Utilisateur non trouvé.");
             }
 
-            // TODO: Create a remember me cookie if the user has selected the option
-            // to remained logged in on the login form.
-            // https://github.com/andrewdyer/php-mvc-register-login/blob/development/www/app/Model/UserLogin.php#L86
+            $hashedPassword = \App\Utility\Hash::generate($data['password'], $user['salt']);
 
-            $_SESSION['user'] = array(
+            if ($hashedPassword !== $user['password']) {
+                throw new \Exception("Mot de passe incorrect.");
+            }
+
+            $_SESSION['user'] = [
                 'id' => $user['id'],
                 'username' => $user['username'],
-            );
+                'email' => $user['email']
+            ];
 
             return true;
 
-        } catch (Exception $ex) {
-            // TODO : Set flash if error
-            /* Utility\Flash::danger($ex->getMessage());*/
+        } catch (\Exception $ex) {
+            \App\Utility\Flash::danger($ex->getMessage());
+            return false;
         }
     }
+
 
 
     /**
