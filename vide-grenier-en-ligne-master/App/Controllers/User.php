@@ -52,7 +52,7 @@ class User extends \Core\Controller
             // validation
 
             $this->register($f);
-            // TODO: Rappeler la fonction de login pour connecter l'utilisateur
+            // Fred : Connexion automatique après la création du compte
             $this->login($f);
             // Si login OK, redirige vers le compte
             header('Location: /account');
