@@ -8,6 +8,8 @@ services:
       - 8000:80
     volumes:
       - .:/var/www/project
+      # Add an anonymous volume to preserve the vendor directory from the image
+      - /var/www/project/vendor
       - ./public:/var/www/html  
     build:
       context: .
