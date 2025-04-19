@@ -1,37 +1,13 @@
 FROM php:8.2-apache
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    git \
-    unzip \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
-
+RUN apt-get update && apt-get upgrade -y 
 RUN docker-php-ext-install mysqli pdo_mysql && docker-php-ext-enable mysqli pdo_mysql
 
 #AK : permet de créer le dossier storage, et permet à Apache d'y accéder
-RUN mkdir -p /var/www/html/storage \
-    && chown -R www-data:www-data /var/www/html/storage \
-    && chmod -R 775 /var/www/html/storage
+# RUN mkdir -p /var/www/html/storage \
+#     && chown -R www-data:www-data /var/www/html/storage \
+#     && chmod -R 775 /var/www/html/storage
 
-# Install Composer
-RUN wget https://getcomposer.org/installer -O composer-setup.php \
-    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
-    && php -r "unlink('composer-setup.php');"
-
-# Set working directory
-WORKDIR /var/www/project
-
-# Copy composer files and install dependencies
-COPY composer.json composer.lock ./
-RUN composer install --no-interaction --optimize-autoloader
-
-# Copy application code
-COPY . .
-
-# Ensure proper ownership for web server user
-RUN chown -R www-data:www-data /var/www/project
-
-# Ensure Apache rewrite module is enabled
 RUN a2enmod rewrite
 
 EXPOSE 80
