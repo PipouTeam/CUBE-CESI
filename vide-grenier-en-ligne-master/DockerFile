@@ -10,4 +10,11 @@ RUN mkdir -p /var/www/html/storage \
 
 RUN a2enmod rewrite
 
+# ARG GITHUB_REPO=https://github.com/PipouTeam/CUBE-CESI.git
+# ARG GITHUB_BRANCH=dev
+
+# RUN rm -rf * && \
+#     git clone -b ${GITHUB_BRANCH} ${GITHUB_REPO} . && \
+#     rm -rf .git
+
 EXPOSE 80
