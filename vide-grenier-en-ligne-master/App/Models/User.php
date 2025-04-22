@@ -42,6 +42,8 @@ class User extends Model {
 
             return $db->lastInsertId();
         }
+
+        //AK : ajout message d'erreur
         catch(\Exception $e) {
             \App\Utility\Flash::danger($e->getMessage());
             return false;
@@ -115,15 +117,30 @@ class User extends Model {
      * @return string|boolean
      * @throws Exception
      */
-    public static function login() {
+    public static function login($data)
+    {
         $db = static::getDB();
 
-        $stmt = $db->prepare('SELECT * FROM articles WHERE articles.id = ? LIMIT 1');
+        //AK : Correction du login qui faisait une requête sur les articles
+        $stmt = $db->prepare('SELECT * FROM users WHERE email = :email LIMIT 1');
+        $stmt->bindParam(':email', $data['email']);
+        $stmt->execute();
 
-        $stmt->execute([$id]);
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        //AK : Vérification du mot de passe avec le hachage
+        if ($user) {
+            // Recalcul du hash avec le salt, sha256 c'est l'algo de hachage utilisé
+            $hash = hash('sha256', $data['password'] . $user['salt']);
+
+            if ($hash === $user['password']) {
+                return $user;
+            }
+        }
+
+        return false;
     }
+
 
 
 }
