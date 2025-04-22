@@ -135,6 +135,21 @@ class User extends \Core\Controller
                 throw new \Exception("Mot de passe incorrect.");
             }
 
+            $hashedPassword = \App\Utility\Hash::generate($data['password'], $user['salt']);
+
+            if ($hashedPassword !== $user['password']) {
+                throw new \Exception("Mot de passe incorrect.");
+            }
+
+            $rememberMe = isset($data['remember']) && $data['remember'] === "1";
+            if ($rememberMe) {
+                $token = bin2hex(random_bytes(32));
+                $expires = time() + 60 * 60 * 24 * 30;
+            
+                \App\Models\User::setRememberToken($user['id'], $token, date('Y-m-d H:i:s', $expires));
+                setcookie('remember_me', $token, $expires, "/", "", false, true);
+            }
+
             $_SESSION['user'] = [
                 'id' => $user['id'],
                 'username' => $user['username'],
@@ -176,6 +191,11 @@ class User extends \Core\Controller
                 $params["secure"], $params["httponly"]
             );
         }
+
+        if (isset($_COOKIE['remember_me'])) {
+            setcookie('remember_me', '', time() - 3600, "/");
+            unset($_COOKIE['remember_me']);
+        }        
 
         session_destroy();
 

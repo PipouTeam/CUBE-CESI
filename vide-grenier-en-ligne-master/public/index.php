@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\User;
+
+
 /**
  * Front controller
  *
@@ -7,6 +10,21 @@
  */
 
 session_start();
+
+
+// Connexion via cookie "remember_me"
+if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
+    $user = \App\Models\User::getUserByRememberToken($_COOKIE['remember_me']);
+
+    if ($user) {
+        $_SESSION['user'] = [
+            'id' => $user['id'],
+            'username' => $user['username'],
+        ];
+    }
+}
+
+
 
 /**
  * Composer

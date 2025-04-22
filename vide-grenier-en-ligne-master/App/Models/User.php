@@ -64,6 +64,52 @@ class User extends Model {
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
+    // Enregistre le token dans la db 
+    public static function setRememberToken($userId, $token, $expiresAt)
+    {
+        $db = static::getDB();
+
+        $stmt = $db->prepare("
+            INSERT INTO user_tokens (user_id, token, expires_at)
+            VALUES (:user_id, :token, :expires_at)
+        ");
+
+        $stmt->bindParam(':user_id', $userId);
+        $stmt->bindParam(':token', $token);
+        $stmt->bindParam(':expires_at', $expiresAt);
+
+        return $stmt->execute(); 
+    }
+
+    // recupere le token dans la db 
+    public static function getUserByRememberToken($token)
+    {
+        $db = static::getDB();
+
+        $stmt = $db->prepare("
+            SELECT users.* 
+            FROM users 
+            JOIN user_tokens ON user_tokens.user_id = users.id
+            WHERE user_tokens.token = :token
+            AND user_tokens.expires_at > NOW()
+            LIMIT 1
+        ");
+
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC); 
+    }
+
+    // Delete le token a la deconnexion 
+    public static function deleteRememberToken($token)
+    {
+        $db = static::getDB();
+
+        $stmt = $db->prepare("DELETE FROM user_tokens WHERE token = :token");
+        $stmt->bindParam(':token', $token);
+        return $stmt->execute();
+    }
 
     /**
      * ?
