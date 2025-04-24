@@ -7,8 +7,8 @@ services:
     ports:
       - 8000:80
     volumes:
-      - .:/var/www/project
-      - ./public:/var/www/html  
+      - ../../.:/var/www/project
+      - ../../public:/var/www/html  
     build:
       context: .
       dockerfile: DockerFile
@@ -23,7 +23,7 @@ services:
     ports:
       - 3307:3306
     volumes:
-      - ./sql/import.sql:/docker-entrypoint-initdb.d/import.sql  
+      - ../../sql/import.sql:/docker-entrypoint-initdb.d/import.sql  
   phpma:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin-Cube

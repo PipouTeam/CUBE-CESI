@@ -1,0 +1,21 @@
+FROM php:8.2-apache
+
+RUN apt-get update && apt-get upgrade -y 
+RUN docker-php-ext-install mysqli pdo_mysql && docker-php-ext-enable mysqli pdo_mysql
+
+RUN a2enmod rewrite
+
+# -------- RECUPERATION DU GIT --------
+    WORKDIR /var/www/html
+    
+    # Arguments
+    # Si aucun argument n'est fourni, on prend ces valeurs par défaut
+    ARG GITHUB_REPO=https://github.com/PipouTeam/CUBE-CESI.git
+    ARG GITHUB_BRANCH=main
+    
+    RUN rm -rf * && \
+        git clone -b ${GITHUB_BRANCH} ${GITHUB_REPO} . && \
+        rm -rf .git
+# -------------------------------------
+    
+EXPOSE 80

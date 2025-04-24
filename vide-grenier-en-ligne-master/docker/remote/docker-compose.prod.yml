@@ -12,6 +12,9 @@ services:
     build:
       context: .
       dockerfile: DockerFile
+      args:
+        GITHUB_REPO: ${REPO}
+        GITHUB_BRANCH: ${PROD_BRANCH}
   db:
     image: mysql:8.0
     container_name: mysql8-Cube
