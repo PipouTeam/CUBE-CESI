@@ -3,11 +3,6 @@ FROM php:8.2-apache
 RUN apt-get update && apt-get upgrade -y 
 RUN docker-php-ext-install mysqli pdo_mysql && docker-php-ext-enable mysqli pdo_mysql
 
-#AK : permet de créer le dossier storage, et permet à Apache d'y accéder
-RUN mkdir -p /var/www/html/storage \
-    && chown -R www-data:www-data /var/www/html/storage \
-    && chmod -R 775 /var/www/html/storage
-
 RUN a2enmod rewrite
 
 EXPOSE 80
