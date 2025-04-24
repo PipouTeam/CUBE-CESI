@@ -98,7 +98,9 @@ class User extends Model {
         $stmt->bindParam(':token', $token);
         $stmt->execute();
 
-        return $stmt->fetch(\PDO::FETCH_ASSOC); 
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $user;
     }
 
     // Delete le token a la deconnexion 

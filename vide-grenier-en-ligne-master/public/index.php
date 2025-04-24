@@ -13,14 +13,25 @@ session_start();
 
 
 // Connexion via cookie "remember_me"
-if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
-    $user = \App\Models\User::getUserByRememberToken($_COOKIE['remember_me']);
 
-    if ($user) {
-        $_SESSION['user'] = [
-            'id' => $user['id'],
-            'username' => $user['username'],
-        ];
+if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
+    try {
+        $user = \App\Models\User::getUserByRememberToken($_COOKIE['remember_me']);
+
+        if ($user) {
+            $_SESSION['user'] = [
+                'id' => $user['id'],
+                'username' => $user['username'],
+            ];
+        } else {
+            // Supprime juste le cookie si le token est invalide
+            setcookie('remember_me', '', time() - 3600, '/');
+            unset($_COOKIE['remember_me']);
+        }
+    } catch (\Throwable $e) {
+        // En cas d'erreur (ex: DB réinitialisée)
+        setcookie('remember_me', '', time() - 3600, '/');
+        unset($_COOKIE['remember_me']);
     }
 }
 
