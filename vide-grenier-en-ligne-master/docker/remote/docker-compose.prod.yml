@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  php:
+    image: php:8.2-apache
+    container_name: php82-Cube
+    ports:
+      - 8000:80
+    volumes:
+      - .:/var/www/project
+      - ./public:/var/www/html  
+    build:
+      context: .
+      dockerfile: DockerFile
+      args:
+        GITHUB_REPO: ${REPO}
+        GITHUB_BRANCH: ${PROD_BRANCH}
+  db:
+    image: mysql:8.0
+    container_name: mysql8-Cube
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: vide-grenier 
+      MYSQL_USER: test
+      MYSQL_PASSWORD: pass
+    ports:
+      - 3307:3306
+    volumes:
+      - ./sql/import.sql:/docker-entrypoint-initdb.d/import.sql  
+  phpma:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-Cube
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: pass
+    ports:
+      - 8899:80
