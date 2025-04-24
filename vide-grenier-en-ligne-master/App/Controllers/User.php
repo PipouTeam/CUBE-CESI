@@ -135,12 +135,6 @@ class User extends \Core\Controller
                 throw new \Exception("Mot de passe incorrect.");
             }
 
-            $hashedPassword = \App\Utility\Hash::generate($data['password'], $user['salt']);
-
-            if ($hashedPassword !== $user['password']) {
-                throw new \Exception("Mot de passe incorrect.");
-            }
-
             $rememberMe = isset($data['remember']) && $data['remember'] === "1";
             if ($rememberMe) {
                 $token = bin2hex(random_bytes(32));
