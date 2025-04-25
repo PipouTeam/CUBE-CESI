@@ -13,11 +13,19 @@ use App\Utility;
  */
 class User extends Model {
 
+    //Ajouter pour les test unitaire 
+    public static $db;
+
+    public static function setDB($db) {
+        self::$db = $db;
+    }
+    /////////////////////////////////
+
     /**
      * Crée un utilisateur
      */
     public static function createUser($data) {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         try {
             // AK : Ajout d'une sécurité champ vide
