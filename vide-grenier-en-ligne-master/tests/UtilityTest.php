@@ -14,15 +14,17 @@ use PHPUnit\Framework\TestCase;
  *               -> fournit aucun string, retourne une erreur Flash
  *
  * 2 - generateSalt() -> fournit un int pour la longueur du salt, retourne un salt de la même longueur
- *                    -> fournit 0, retourne une erreur
+ *                    -> fournit un champ vide, retourne une erreur
  *                    -> fournit un input de 1000 ou plus, ne plante pas et retourne une chaine de 1000
+ *                    -> fournit un input non valide (non entier), retourne une erreur
  *
- * 3 - generateUnique() (Token) -> retourne un hachage via generate()
+ * 3 - generateUnique() (Token) -> n'est pas utilisé
  */
 
 final class UtilityTest extends TestCase
 {
     /*** Test Generate() ***/
+
     public function testGenerateReturnsRightHashLength() {
         $result = Hash::Generate("abc");
         $this -> assertEquals(64, strlen($result));
@@ -50,6 +52,36 @@ final class UtilityTest extends TestCase
         $this->expectExceptionMessage("Un string est nécessaire.");
 
         Hash::generate("");
+    }
+
+    /*** Test GenerateSalt() ***/
+
+    public function testGenerateSaltReturnsRightSaltLength() {
+        $result = Hash::GenerateSalt(22);
+        $this -> assertEquals(22, strlen($result));
+    }
+
+    public function testGenerateSaltReturnsErrorIfParameterIsEmpty() {
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("La longueur du salt doit être un entier positif.");
+
+        Hash::generateSalt("");
+    }
+
+    public function testGenerateSaltReturnsErrorIfParameterIsNoInteger() {
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("La longueur du salt doit être un entier positif.");
+
+        Hash::generateSalt(-10);
+    }
+
+    public function testGenerateSaltReturnsExtraLongSaltLength() {
+        $length = 1000;
+        $expectedLength = Hash::GenerateSalt($length);
+
+        $this -> assertEquals(strlen($expectedLength), $length);
     }
 
 }
