@@ -7,11 +7,19 @@ use App\Core;
 use DateTime;
 use Exception;
 use App\Utility;
+use PDO;
 
 /**
  * Articles Model
  */
 class Articles extends Model {
+
+    public static $db;
+
+    public static function setDBForTests(PDO $db)
+    {
+        self::$db = $db;
+    }
 
     /**
      * ?
@@ -67,7 +75,7 @@ class Articles extends Model {
      * @throws Exception
      */
     public static function addOneView($id) {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare('
             UPDATE articles 
@@ -84,7 +92,7 @@ class Articles extends Model {
      * @throws Exception
      */
     public static function getByUser($id) {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare('
             SELECT *, articles.id as id FROM articles
@@ -124,7 +132,7 @@ class Articles extends Model {
      * @throws Exception
      */
     public static function save($data) {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare('INSERT INTO articles(name, description, user_id, published_date) VALUES (:name, :description, :user_id,:published_date)');
 
@@ -141,7 +149,7 @@ class Articles extends Model {
     }
 
     public static function attachPicture($articleId, $pictureName){
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare('UPDATE articles SET picture = :picture WHERE articles.id = :articleid');
 
