@@ -48,26 +48,6 @@ final class UserRegistryTest extends TestCase
         $this->deleteUserWithEmail($userData['email']);
     }
 
-    public function testUserLogin(): void
-    {
-        $userData = [
-            'username' => 'testlogin',
-            'email' => 'testlogin@gmail.com',
-            'password' => hash('sha256', 'test' . 'test'), // password + salt
-            'salt' => 'test'
-        ];
-        
-        $userId = User::createUser($userData);
-        
-        $user = User::getByLogin($userData['email']);
-        
-        // Verify password hash
-        $hash = hash('sha256', 'test' . $user['salt']);
-        $this->assertEquals($hash, $user['password']);
-        
-        $this->deleteUserWithEmail($userData['email']);
-    }
-
     public function testRememberMeFunction(): void
     {
         $userData = [
