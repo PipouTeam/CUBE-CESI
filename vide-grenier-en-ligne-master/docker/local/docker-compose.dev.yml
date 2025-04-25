@@ -2,16 +2,18 @@ version: '3.8'
 
 services:
   php:
-    image: php:8.2-apache
+    build:
+      context: .
+      dockerfile: DockerFile
     container_name: php82-Cube
     ports:
       - 8000:80
     volumes:
-      - ../../.:/var/www/project
-      - ../../public:/var/www/html  
-    build:
-      context: .
-      dockerfile: DockerFile
+      - ../../:/var/www/project
+      - ../../public:/var/www/html
+    depends_on:
+      - db
+  
   db:
     image: mysql:8.0
     container_name: mysql8-Cube
@@ -23,7 +25,8 @@ services:
     ports:
       - 3307:3306
     volumes:
-      - ../../sql/import.sql:/docker-entrypoint-initdb.d/import.sql  
+      - ../../sql/import.sql:/docker-entrypoint-initdb.d/import.sql
+  
   phpma:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin-Cube
@@ -34,3 +37,5 @@ services:
       PMA_PASSWORD: pass
     ports:
       - 8899:80
+    depends_on:
+      - db
