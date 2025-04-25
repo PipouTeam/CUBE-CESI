@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
 use App\Models\Articles;
@@ -33,5 +33,29 @@ final class ArticlesTest extends TestCase
 
         $this->assertEquals('42', $articleId);
     }
+
+    public function testAttachingPicturesToArticles(): void
+    {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+
+        Articles::setDBForTests($mockPDO);
+
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        
+        $mockStatement->expects($this->once())
+            ->method('execute')
+            ->willReturn(true);
+        
+        $mockPDO->method('lastInsertId')->willReturn('test.jpeg');
+
+        $articleId = 1;
+        $pictureName = 'test.jpeg';
+        
+        Articles::attachPicture($articleId, $pictureName);
+
+        $this->assertTrue(true);
+    }
+
 
 }

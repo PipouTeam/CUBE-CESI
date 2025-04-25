@@ -149,7 +149,7 @@ class Articles extends Model {
     }
 
     public static function attachPicture($articleId, $pictureName){
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare('UPDATE articles SET picture = :picture WHERE articles.id = :articleid');
 
