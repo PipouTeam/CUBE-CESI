@@ -75,7 +75,7 @@ class Articles extends Model {
      * @throws Exception
      */
     public static function addOneView($id) {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare('
             UPDATE articles 

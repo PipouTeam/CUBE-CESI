@@ -59,23 +59,18 @@ final class ArticlesTest extends TestCase
 
     public function testRetrievingArticlesByUser(): void
     {
-        // Créer des mocks pour PDO et PDOStatement
         $mockPDO = $this->createMock(PDO::class);
         $mockStatement = $this->createMock(PDOStatement::class);
 
-        // Fixer la DB à utiliser pour ce test
         Articles::setDBForTests($mockPDO);
 
-        // Simuler la préparation de la requête
         $mockPDO->method('prepare')->willReturn($mockStatement);
 
-        // Simuler l'exécution de la requête
         $mockStatement->expects($this->once())
             ->method('execute')
-            ->with([1]) // Vérifier que l'ID de l'utilisateur est passé à la méthode
+            ->with([1])
             ->willReturn(true);
 
-        // Simuler le retour de fetchAll pour renvoyer une liste d'articles fictifs
         $mockStatement->method('fetchAll')
             ->willReturn([
                 [
@@ -94,14 +89,28 @@ final class ArticlesTest extends TestCase
                 ]
             ]);
 
-        // Appel de la méthode à tester
         $articles = Articles::getByUser(1);
 
-        // Vérification que la méthode retourne bien les articles attendus
-        $this->assertCount(2, $articles); // Il doit y avoir 2 articles
-        $this->assertEquals('Article 1', $articles[0]['name']); // Vérifier le nom du premier article
-        $this->assertEquals('Article 2', $articles[1]['name']); // Vérifier le nom du deuxième article
+        $this->assertCount(2, $articles);
+        $this->assertEquals('Article 1', $articles[0]['name']);
+        $this->assertEquals('Article 2', $articles[1]['name']);
     }
 
+    public function testViewCounter(): void
+    {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+
+        Articles::setDBForTests($mockPDO);
+
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+
+        $mockStatement->expects($this->once())
+            ->method('execute')
+            ->with([1])
+            ->willReturn(true);
+
+        Articles::addOneView(1);
+    }
 
 }
