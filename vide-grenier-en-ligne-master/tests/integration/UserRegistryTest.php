@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use PHPUnit\Framework\TestCase;
 use App\Models\User;
+use Core\Model;
 
 final class UserRegistryTest extends TestCase
 {
@@ -14,6 +15,9 @@ final class UserRegistryTest extends TestCase
     {
         // This runs before each test
         $this->db = new PDO('mysql:host=127.0.0.1;port=3307;dbname=vide-grenier', 'test', 'pass');
+        
+        // Set the test database connection for the Model class
+        Model::setTestDB($this->db);
     }
 
     protected function tearDown(): void
@@ -30,14 +34,14 @@ final class UserRegistryTest extends TestCase
             'password' => hash('sha256', 'test' . 'test'), // password + salt
             'salt' => 'test'
         ];
-        
-        $this->insertUser($userData);
-        $userId = $this->db->lastInsertId();
+
+        // Now we can use the User model directly
+        $userId = User::createUser($userData);
         
         // Check user registration
         $this->assertNotEmpty($userId);
         
-        $user = $this->getUserWithEmail($userData['email']);
+        $user = User::getByLogin($userData['email']);
         $this->assertNotFalse($user);
         $this->assertEquals($userData['username'], $user['username']);
         
@@ -53,11 +57,9 @@ final class UserRegistryTest extends TestCase
             'salt' => 'test'
         ];
         
-        $this->insertUser($userData);
+        $userId = User::createUser($userData);
         
-        $user = $this->getUserWithEmail($userData['email']);
-        $this->assertNotFalse($user);
-        $this->assertEquals($userData['username'], $user['username']);
+        $user = User::getByLogin($userData['email']);
         
         // Verify password hash
         $hash = hash('sha256', 'test' . $user['salt']);
@@ -75,22 +77,21 @@ final class UserRegistryTest extends TestCase
             'salt' => 'test'
         ];
         
-        $this->insertUser($userData);
-        $userId = $this->db->lastInsertId();
+        $userId = User::createUser($userData);
         
         // Create remember token
         $token = bin2hex(random_bytes(16));
         $expiresAt = date('Y-m-d H:i:s', strtotime('+30 days'));
         
-        $this->insertToken($userId, $token, $expiresAt);
+        User::setRememberToken($userId, $token, $expiresAt);
         
-        $user = $this->getUserByToken($token);
+        $user = User::getUserByRememberToken($token);
         
         // Check user was retrieved by token
         $this->assertNotFalse($user);
         $this->assertEquals($userData['email'], $user['email']);
         
-        $this->deleteToken($token);
+        User::deleteRememberToken($token);
 
         // Check token was deleted
         $stmt = $this->db->prepare('SELECT * FROM user_tokens WHERE token = :token');
@@ -101,52 +102,10 @@ final class UserRegistryTest extends TestCase
         $this->deleteUserWithEmail($userData['email']);
     }
 
-    protected function insertUser($userData): void
-    {
-        $stmt = $this->db->prepare('INSERT INTO users(username, email, password, salt) VALUES (:username, :email, :password, :salt)');
-        $stmt->bindParam(':username', $userData['username']);
-        $stmt->bindParam(':email', $userData['email']);
-        $stmt->bindParam(':password', $userData['password']);
-        $stmt->bindParam(':salt', $userData['salt']);
-        $stmt->execute();
-    }
-
-    protected function getUserWithEmail($email)
-    {
-        $stmt = $this->db->prepare('SELECT * FROM users WHERE email = :email');
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
     protected function deleteUserWithEmail($email): void
     {
         $stmt = $this->db->prepare('DELETE FROM users WHERE email = :email');
         $stmt->bindParam(':email', $email);
         $stmt->execute();
-    }
-    
-    protected function insertToken($userId, $token, $expiresAt): void
-    {
-        $stmt = $this->db->prepare('INSERT INTO user_tokens (user_id, token, expires_at) VALUES (:user_id, :token, :expires_at)');
-        $stmt->bindParam(':user_id', $userId);
-        $stmt->bindParam(':token', $token);
-        $stmt->bindParam(':expires_at', $expiresAt);
-        $stmt->execute();
-    }
-
-    protected function deleteToken($token): void
-    {
-        $stmt = $this->db->prepare('DELETE FROM user_tokens WHERE token = :token');
-        $stmt->bindParam(':token', $token);
-        $stmt->execute();
-    }
-
-    protected function getUserByToken($token)
-    {
-        $stmt = $this->db->prepare('SELECT users.* FROM users JOIN user_tokens ON user_tokens.user_id = users.id WHERE user_tokens.token = :token AND user_tokens.expires_at > NOW() LIMIT 1');
-        $stmt->bindParam(':token', $token);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

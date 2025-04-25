@@ -12,6 +12,21 @@ use App\Config;
  */
 abstract class Model
 {
+    /**
+     * Custom PDO connection for testing
+     */
+    protected static $testDB = null;
+
+    /**
+     * Set a custom PDO connection for testing
+     * 
+     * @param PDO $db PDO connection
+     * @return void
+     */
+    public static function setTestDB(PDO $db)
+    {
+        static::$testDB = $db;
+    }
 
     /**
      * Get the PDO database connection
@@ -20,6 +35,11 @@ abstract class Model
      */
     protected static function getDB()
     {
+        // If a test database connection is set, use it
+        if (static::$testDB !== null) {
+            return static::$testDB;
+        }
+
         static $db = null;
 
         if ($db === null) {
