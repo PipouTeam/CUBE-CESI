@@ -11,6 +11,9 @@ class Hash {
      * Génère et retourne un hash
      */
     public static function generate($string, $salt = "") {
+        if (trim($string) === '') {
+            throw new \Exception("Un string est nécessaire.");
+        }
         return(hash("sha256", $string . $salt));
     }
 
@@ -18,6 +21,9 @@ class Hash {
      * Génère et retourne un salt
      */
     public static function generateSalt($length) {
+        if (!is_int($length) || $length < 1) {
+            throw new \Exception("La longueur du salt doit être un entier positif.");
+        }
         $salt = "";
         $charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/\\][{}\'\";:?.>,<!@#$%^&*()-_=+|";
         for ($i = 0; $i < $length; $i++) {
