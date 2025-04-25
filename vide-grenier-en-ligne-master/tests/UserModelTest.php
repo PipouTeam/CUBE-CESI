@@ -96,5 +96,134 @@ class UserModelTest extends TestCase {
     
         $this->assertFalse($result);
     }
+
+    public function testSetRememberTokenSuccess(){
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+
+        $mockStatement->method('execute')->willReturn(true);
+
+        User::setDB($mockPDO);
+
+        $userId = 1;
+        $token = 'randomToken';
+        $expiresAt = date('Y-m-d H:i:s', time() + 3600);
+
+        $result = User::setRememberToken($userId, $token, $expiresAt);
+
+        $this->assertTrue($result);
+    }
+
+    public function testSetRememberTokenFailure(){
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(false);
+        User::setDB($mockPDO);
+
+        $userId = 1;
+        $token = 'randomToken';
+        $expiresAt = date('Y-m-d H:i:s', time() + 3600);
+        
+        $result = User::setRememberToken($userId, $token, $expiresAt);
+
+        $this->assertFalse($result);
+    }
+
+    public function testGetUserByRememberTokenSuccess(){
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(true);
+        $mockStatement->method('fetch')->willReturn([
+            'id' => 1,
+            'username' => 'Zblip',
+            'email' => 'Blip@bloup.com',
+            'password' => 'hashed_password',
+            'salt' => 'pepper'
+        ]);
+
+        User::setDB($mockPDO);
+
+        $token = 'validToken';
+
+        $user = User::getUserByRememberToken($token);
+
+        $this->assertNotNull($user);
+        $this->assertEquals('Zblip', $user['username']);
+        $this->assertEquals('Blip@bloup.com', $user['email']);
+    }
+
+    public function testGetUserByRememberTokenNotFound(){
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+
+        $mockStatement->method('execute')->willReturn(true);
+        $mockStatement->method('fetch')->willReturn(false); 
+
+        User::setDB($mockPDO);
+
+        $token = 'invalidToken';
+
+        $user = User::getUserByRememberToken($token);
+
+        $this->assertFalse($user);
+    }
+
+    public function testGetUserByRememberTokenExpiredToken(){
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(true);
+        $mockStatement->method('fetch')->willReturn(false);
+
+        User::setDB($mockPDO);
+
+        $token = 'expiredToken';
+
+        $user = User::getUserByRememberToken($token);
+
+        $this->assertFalse($user);
+    }
+
+    public function testDeleteRememberTokenSuccess(){
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+    
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(true);
+    
+        User::setDB($mockPDO);
+    
+        $token = 'validToken';
+    
+        $result = User::deleteRememberToken($token);
+    
+        $this->assertTrue($result);
+    }
+    
+    public function testDeleteRememberTokenFailure(){
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(false);
+
+        User::setDB($mockPDO);
+
+        $token = 'invalidToken';
+
+        $result = User::deleteRememberToken($token);
+
+        $this->assertFalse($result);
+    }
+
     
 }
