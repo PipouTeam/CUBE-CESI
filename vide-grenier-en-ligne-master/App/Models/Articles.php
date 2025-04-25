@@ -92,7 +92,7 @@ class Articles extends Model {
      * @throws Exception
      */
     public static function getByUser($id) {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare('
             SELECT *, articles.id as id FROM articles
