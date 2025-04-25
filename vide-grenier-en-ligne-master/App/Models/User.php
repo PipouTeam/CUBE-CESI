@@ -60,7 +60,7 @@ class User extends Model {
 
     public static function getByLogin($login)
     {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare("
             SELECT * FROM users WHERE ( users.email = :email) LIMIT 1
@@ -75,7 +75,7 @@ class User extends Model {
     // Enregistre le token dans la db 
     public static function setRememberToken($userId, $token, $expiresAt)
     {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare("
             INSERT INTO user_tokens (user_id, token, expires_at)
@@ -92,7 +92,7 @@ class User extends Model {
     // recupere le token dans la db 
     public static function getUserByRememberToken($token)
     {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare("
             SELECT users.* 
@@ -114,7 +114,7 @@ class User extends Model {
     // Delete le token a la deconnexion 
     public static function deleteRememberToken($token)
     {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         $stmt = $db->prepare("DELETE FROM user_tokens WHERE token = :token");
         $stmt->bindParam(':token', $token);
@@ -129,7 +129,7 @@ class User extends Model {
      */
     public static function login($data)
     {
-        $db = static::getDB();
+        $db = self::$db ?? static::getDB();
 
         //AK : Correction du login qui faisait une requête sur les articles
         $stmt = $db->prepare('SELECT * FROM users WHERE email = :email LIMIT 1');
@@ -150,7 +150,5 @@ class User extends Model {
 
         return false;
     }
-
-
 
 }

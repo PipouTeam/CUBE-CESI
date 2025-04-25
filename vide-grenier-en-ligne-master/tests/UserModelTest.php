@@ -26,6 +26,31 @@ class UserModelTest extends TestCase {
 
         $result = User::createUser($validData);
         $this->assertEquals("1", $result);
+    }
 
-        }
+    public function testCreateUserWithMissingData(){
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->expects($this->never())
+                      ->method('execute');
+
+        $mockPDO->method('lastInsertId')->willReturn("1"); 
+        User::setDB($mockPDO);
+
+        $invalidData = [
+            'username' => 'Zblip',
+            'email' => 'Blip@bloup.com',
+            'salt' => 'pepper'
+        ];
+
+        $result = User::createUser($invalidData);
+        $this->assertFalse($result);
+    }
+
+    public function testLoginWithValidCredentials(){
+        
+    }
+    
 }
