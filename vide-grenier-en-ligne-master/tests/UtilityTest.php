@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Utility\Flash;
 use App\Utility\Hash;
 use PHPUnit\Framework\TestCase;
 //require_once("../App/Utility/Hash.php");
@@ -8,17 +9,22 @@ use PHPUnit\Framework\TestCase;
 /* Liste des tests à effectuer */
 
 /***
- * 1- generate() -> fournit un string, la sortie est bien un hash SHA-256 (= 64 caractères)
+ * 1- HASH :: generate() -> fournit un string, la sortie est bien un hash SHA-256 (= 64 caractères)
  *               -> fournit 2 salts différents, retourne different hashes
  *               -> fournit un string et un salt, retourne un hashage avec salt
  *               -> fournit aucun string, retourne une erreur Flash
  *
- * 2 - generateSalt() -> fournit un int pour la longueur du salt, retourne un salt de la même longueur
+ * 2 - HASH :: generateSalt() -> fournit un int pour la longueur du salt, retourne un salt de la même longueur
  *                    -> fournit un champ vide, retourne une erreur
  *                    -> fournit un input de 1000 ou plus, ne plante pas et retourne une chaine de 1000
  *                    -> fournit un input non valide (non entier), retourne une erreur
  *
- * 3 - generateUnique() (Token) -> n'est pas utilisé
+ * 3 - HASH :: generateUnique() (Token) -> n'est pas utilisé
+ *
+ * 4 - FlASH :: danger() -> founit un string valide, vérifie que le message stocké dans la session est le même
+ *
+ * 5 -  FLASH :: getError() -> fournit un message d'erreur dans la session, vérifie qu'il soit retourné
+ *                          -> vérifie que la fonction supprime le message d'erreur de la session
  */
 
 final class UtilityTest extends TestCase
@@ -82,6 +88,37 @@ final class UtilityTest extends TestCase
         $expectedLength = Hash::GenerateSalt($length);
 
         $this -> assertEquals(strlen($expectedLength), $length);
+    }
+
+    /*** Test danger() ***/
+
+    public function testDangerStoreMessageInSession() {
+        $message = "Danger, Une erreur s'est produite.";
+
+        Flash::danger($message);
+
+        $this -> assertEquals($message, $_SESSION['flash_error']);
+    }
+
+    /*** Test getError() ***/
+
+    public function testGetErrorReturnsMessageInSession() {
+        $message = "Une erreur s'est produite.";
+        $_SESSION['flash_error'] = $message;
+
+        $result = Flash::getError();
+        $this -> assertEquals($message, $result);
+
+    }
+
+    public function testGetErrorDeletesMessageInSession() {
+        $message = "Une erreur s'est produite.";
+        $_SESSION['flash_error'] = $message;
+
+        Flash::getError();
+
+        $this->assertArrayNotHasKey('flash_error', $_SESSION);
+
     }
 
 }

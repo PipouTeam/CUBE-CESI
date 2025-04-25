@@ -66,7 +66,7 @@ class User extends \Core\Controller
 
 
         $error = \App\Utility\Flash::getError();
-
+        // renderTemplate charge la page register.html avec le message d'erreur récupéré dans Flash getError()
         View::renderTemplate('User/register.html', [
             'flash' => [
                 'danger' => $error
