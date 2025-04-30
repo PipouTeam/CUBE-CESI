@@ -75,4 +75,39 @@ class Api extends \Core\Controller
         header('Content-Type: application/json');
         echo json_encode($city);
     }
+    
+    /**
+     * Récupère les articles dans un rayon autour d'une ville
+     *
+     * @throws Exception
+     */
+    public function ProductsNearbyAction(){
+        if (!isset($_GET['city_id']) || !isset($_GET['radius'])) {
+            header('HTTP/1.1 400 Bad Request');
+            echo json_encode(['error' => 'Missing city_id or radius parameter']);
+            return;
+        }
+        
+        $cityId = (int)$_GET['city_id'];
+        $radius = (float)$_GET['radius'];
+        $sort = isset($_GET['sort']) ? $_GET['sort'] : '';
+        
+        // Validate radius (between 1 and 100 km)
+        $radius = max(1, min(100, $radius));
+        
+        $articles = Articles::getWithinRadius($cityId, $radius, $sort);
+        
+        // Add city information to each article
+        foreach ($articles as &$article) {
+            if (isset($article['ville_id'])) {
+                $city = Cities::getById($article['ville_id']);
+                if ($city) {
+                    $article['city'] = $city;
+                }
+            }
+        }
+        
+        header('Content-Type: application/json');
+        echo json_encode($articles);
+    }
 }
