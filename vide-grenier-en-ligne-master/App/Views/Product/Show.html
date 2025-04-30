@@ -13,8 +13,18 @@
                             src="{{ ('/storage/' ~ article.picture) }}"/>
 
                 </div>
-                <h1><a href="#">{{article.name}}</a></h1>
-
+                <h1>
+                    <a href="#">{{article.name}}</a>
+                    {% if city %}
+                    <span style="float:right; font-size:0.6em; color:#777;">
+                        <i class="fa fa-map-marker"></i> {{city.ville_nom_reel}}
+                    </span>
+                    {% else %}
+                    <span style="float:right; font-size:0.6em; color:#777;">
+                        <i class="fa fa-map-marker"></i> Lieu non spécifié
+                    </span>
+                    {% endif %}
+                </h1>
 
                 <div class="author">
                     <div class="author-head">

@@ -78,6 +78,10 @@
                 '                                    </div>' +
                 '                                    <div class="v-desc">' +
                 '                                        <a href="/product/'+ $product.id + '">'+ $product.name+'</a>' +
+                '                                        <span style="float:right; font-size:0.8em; color:#777;">' + 
+                '                                           <i class="fa fa-map-marker"></i> ' + 
+                '                                           ' + (($product.city && $product.city.ville_nom_reel) ? $product.city.ville_nom_reel : 'Lieu non spécifié') + 
+                '                                        </span>' +
                 '                                    </div>' +
                 '                                    <p>'+ $product.description.slice(0, 20) + '...</p>' +
                 '                                    <div class="v-views">' +
