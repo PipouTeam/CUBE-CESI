@@ -23,7 +23,11 @@ services:
     ports:
       - 3307:3306
     volumes:
-      - ../../sql/import.sql:/docker-entrypoint-initdb.d/import.sql  
+      - ../../sql/dev/0_articles.sql:/docker-entrypoint-initdb.d/0_articles.sql
+      - ../../sql/dev/1_villes_france.sql:/docker-entrypoint-initdb.d/1_villes_france.sql
+      - ../../sql/dev/2_user_tokens.sql:/docker-entrypoint-initdb.d/2_user_tokens.sql
+      - ../../sql/dev/3_users.sql:/docker-entrypoint-initdb.d/3_users.sql
+      - ../../sql/dev/dev.import.sql:/docker-entrypoint-initdb.d/import.sql
   phpma:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin-Cube
