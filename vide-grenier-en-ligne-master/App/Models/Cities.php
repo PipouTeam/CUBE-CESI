@@ -26,4 +26,23 @@ class Cities extends Model {
 
         return $stmt->fetchAll(\PDO::FETCH_COLUMN, 0);
     }
+
+    /**
+     * Get city information by ID
+     * 
+     * @param int $id City ID
+     * @return array|false City information or false if not found
+     * @throws Exception
+     */
+    public static function getById($id) {
+        $db = static::getDB();
+
+        $stmt = $db->prepare('SELECT * FROM villes_france WHERE ville_id = :id LIMIT 1');
+        
+        $stmt->bindParam(':id', $id, \PDO::PARAM_INT);
+        
+        $stmt->execute();
+        
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
 }

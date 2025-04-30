@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\Articles;
+use App\Models\Cities;
 use App\Utility\Upload;
 use \Core\View;
 
@@ -56,13 +57,20 @@ class Product extends \Core\Controller
             Articles::addOneView($id);
             $suggestions = Articles::getSuggest();
             $article = Articles::getOne($id);
+            
+            // Get city information if ville_id is available
+            $city = null;
+            if (isset($article[0]['ville_id'])) {
+                $city = Cities::getById($article[0]['ville_id']);
+            }
         } catch(\Exception $e){
             var_dump($e);
         }
 
         View::renderTemplate('Product/Show.html', [
             'article' => $article[0],
-            'suggestions' => $suggestions
+            'suggestions' => $suggestions,
+            'city' => $city
         ]);
     }
 }
