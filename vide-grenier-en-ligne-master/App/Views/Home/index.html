@@ -14,12 +14,12 @@
                             <div class="col-lg-10 col-sm-10 col-xs-8">
                                 <ul class="list-inline">
                                     <li>
-                                        <a href="#" class="color-active">
+                                        <a href="#" class="color-active" id="tab-home">
                                             <span class="visible-xs">À la une</span>
                                             <span class="hidden-xs">À la une</span>
                                         </a>
                                     </li>
-                                    <li><a href="#">Autour de moi</a></li>
+                                    <li><a href="#" id="tab-nearby">Autour de moi</a></li>
                                 </ul>
                             </div>
                             <div class="col-lg-2 col-sm-2 col-xs-4">
@@ -28,15 +28,39 @@
                                         Filtrer par <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        <li><a onclick="getProductsAndRender('views')"><i
+                                        <li><a onclick="applyFilter('views')"><i
                                                 class="cv cvicon-cv-calender"></i>
                                             Popularité</a></li>
-                                        <li><a onclick="getProductsAndRender('date')"><i
+                                        <li><a onclick="applyFilter('date')"><i
                                                 class="cv cvicon-cv-calender"></i>
                                             Récent</a></li>
                                     </ul>
                                 </div>
                                 <div class="clearfix"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Radius slider for "Autour de moi" tab -->
+                    <div id="radius-control" style="display: none; padding: 15px; background-color: #f8f8f8; border-bottom: 1px solid #e8e8e8;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="city-search">Ville de référence:</label>
+                                    <input type="text" class="form-control" id="city-search" placeholder="Entrez une ville...">
+                                    <input type="hidden" id="selected-city-id" value="">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="radius-slider">Rayon de recherche: <span id="radius-value">10</span> km</label>
+                                    <input type="range" class="form-control-range" id="radius-slider" min="1" max="100" value="10">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button id="search-nearby" class="btn btn-primary">Rechercher</button>
                             </div>
                         </div>
                     </div>
@@ -57,6 +81,10 @@
 
 {% block javascript %}
     <script type="text/javascript">
+        let currentTab = 'home';
+        let currentFilter = '';
+        let selectedCityId = '';
+        let currentRadius = 10;
 
         function getProductsAndRender(option = ''){
             $.ajax({
@@ -66,6 +94,31 @@
                 for(let i = 0; i < result.length; i++){
                     renderProduct(result[i])
                 }
+            });
+        }
+        
+        function getProductsNearby(cityId, radius, option = ''){
+            if (!cityId) {
+                alert('Veuillez sélectionner une ville de référence');
+                return;
+            }
+            
+            $.ajax({
+                url: "/api/products-nearby" + '?city_id=' + cityId + '&radius=' + radius + '&sort=' + option,
+            }).done(function(result) {
+                $('#articlelist').empty();
+                
+                if (result.length === 0) {
+                    $('#articlelist').html('<div class="col-md-12"><p>Aucun article trouvé dans ce rayon.</p></div>');
+                    return;
+                }
+                
+                for(let i = 0; i < result.length; i++){
+                    renderProduct(result[i])
+                }
+            }).fail(function(error) {
+                console.error('Error fetching nearby products:', error);
+                $('#articlelist').html('<div class="col-md-12"><p>Une erreur est survenue lors de la recherche.</p></div>');
             });
         }
 
@@ -91,9 +144,100 @@
                 '</div>')
              .appendTo($('#articlelist'));
         }
+        
+        function applyFilter(filter) {
+            currentFilter = filter;
+            
+            if (currentTab === 'home') {
+                getProductsAndRender(filter);
+            } else {
+                getProductsNearby(selectedCityId, currentRadius, filter);
+            }
+        }
+        
+        function initCityAutocomplete() {
+            $('#city-search').on('keyup', function() {
+                const query = $(this).val();
+                
+                if (query.length < 3) return;
+                
+                $.ajax({
+                    url: "/api/cities?query=" + query,
+                }).done(function(cities) {
+                    if (cities.length > 0) {
+                        // Show autocomplete dropdown
+                        const dropdown = $('<div id="city-autocomplete" class="dropdown-menu show"></div>');
+                        
+                        cities.forEach(function(cityId) {
+                            $.ajax({
+                                url: "/api/city?id=" + cityId,
+                            }).done(function(city) {
+                                $('<a class="dropdown-item" href="#" data-city-id="' + city.ville_id + '">' + 
+                                  city.ville_nom_reel + ' (' + city.ville_code_postal + ')</a>')
+                                .appendTo(dropdown)
+                                .on('click', function(e) {
+                                    e.preventDefault();
+                                    $('#city-search').val($(this).text());
+                                    selectedCityId = $(this).data('city-id');
+                                    $('#selected-city-id').val(selectedCityId);
+                                    $('#city-autocomplete').remove();
+                                });
+                            });
+                        });
+                        
+                        // Remove any existing dropdown
+                        $('#city-autocomplete').remove();
+                        
+                        // Add the new dropdown
+                        dropdown.insertAfter('#city-search');
+                    }
+                });
+            });
+            
+            // Close dropdown when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#city-search, #city-autocomplete').length) {
+                    $('#city-autocomplete').remove();
+                }
+            });
+        }
 
         $( document ).ready(function() {
+            // Initialize with home tab
             getProductsAndRender();
+            
+            // Initialize city autocomplete
+            initCityAutocomplete();
+            
+            // Tab switching
+            $('#tab-home').on('click', function(e) {
+                e.preventDefault();
+                currentTab = 'home';
+                $(this).addClass('color-active');
+                $('#tab-nearby').removeClass('color-active');
+                $('#radius-control').hide();
+                getProductsAndRender(currentFilter);
+            });
+            
+            $('#tab-nearby').on('click', function(e) {
+                e.preventDefault();
+                currentTab = 'nearby';
+                $(this).addClass('color-active');
+                $('#tab-home').removeClass('color-active');
+                $('#radius-control').show();
+            });
+            
+            // Radius slider
+            $('#radius-slider').on('input', function() {
+                currentRadius = $(this).val();
+                $('#radius-value').text(currentRadius);
+            });
+            
+            // Search nearby button
+            $('#search-nearby').on('click', function() {
+                selectedCityId = $('#selected-city-id').val();
+                getProductsNearby(selectedCityId, currentRadius, currentFilter);
+            });
         });
     </script>
 {% endblock %}
