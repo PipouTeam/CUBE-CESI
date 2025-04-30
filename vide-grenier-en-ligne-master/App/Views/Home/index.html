@@ -20,6 +20,7 @@
                                         </a>
                                     </li>
                                     <li><a href="#" id="tab-nearby">Autour de moi</a></li>
+                                    <li><a href="#" id="tab-map">Carte</a></li>
                                 </ul>
                             </div>
                             <div class="col-lg-2 col-sm-2 col-xs-4">
@@ -64,6 +65,11 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Map container for "Carte" tab -->
+                    <div id="map-container" style="display: none;">
+                        <div id="map" style="height: 600px; width: 100%;"></div>
+                    </div>
 
                     <div class="cb-content">
                         <div class="row" id="articlelist">
@@ -81,11 +87,106 @@
 
 {% block javascript %}
     <script type="text/javascript">
-        let currentTab = 'home';
-        let currentFilter = '';
-        let selectedCityId = '';
-        let currentRadius = 10;
-
+        var map = null;
+        var markerClusterGroup = null;
+        var currentTab = 'home';
+        var currentFilter = '';
+        var selectedCityId = '';
+        var currentRadius = 10;
+        
+        $(document).ready(function () {
+            // Initial load of featured articles
+            getProductsAndRender();
+            
+            // City search autocomplete
+            $('#city-search').on('keyup', function() {
+                var query = $(this).val();
+                if (query.length >= 3) {
+                    $.ajax({
+                        url: "/api/cities?query=" + query,
+                    }).done(function(cities) {
+                        var datalist = $('#cities-list');
+                        datalist.empty();
+                        
+                        cities.forEach(function(city) {
+                            var option = $('<option></option>').attr('value', city.ville_nom_reel + ' (' + city.ville_code_postal + ')').data('id', city.ville_id);
+                            datalist.append(option);
+                        });
+                        
+                        // Handle selection
+                        $('#city-search').on('change', function() {
+                            var selectedValue = $(this).val();
+                            var selectedOption = $('#cities-list option').filter(function() {
+                                return $(this).val() === selectedValue;
+                            });
+                            
+                            if (selectedOption.length) {
+                                selectedCityId = selectedOption.data('id');
+                                $('#selected-city-id').val(selectedCityId);
+                            }
+                        });
+                    });
+                }
+            });
+            
+            // Radius slider
+            $('#radius-slider').on('input', function() {
+                currentRadius = $(this).val();
+                $('#radius-value').text(currentRadius);
+            });
+            
+            // Search nearby button
+            $('#search-nearby').on('click', function() {
+                if (selectedCityId) {
+                    getProductsNearby(selectedCityId, currentRadius, currentFilter);
+                } else {
+                    alert('Veuillez sélectionner une ville');
+                }
+            });
+        });
+        
+        function switchTab(tab) {
+            // Hide all tab content
+            $('#radius-control').hide();
+            $('#map-container').hide();
+            $('#articlelist').parent().show();
+            
+            // Show the selected tab content
+            if (tab === 'nearby') {
+                $('#radius-control').show();
+            } else if (tab === 'map') {
+                $('#map-container').show();
+                $('#articlelist').parent().hide();
+                if (!map) {
+                    loadMapData();
+                } else {
+                    // Force map to recalculate size
+                    map.invalidateSize();
+                }
+            }
+            
+            // Update active tab
+            $('.nav-tabs li').removeClass('active');
+            $('#' + tab + '-tab').addClass('active');
+            
+            currentTab = tab;
+            
+            // Load appropriate content
+            if (tab === 'home') {
+                getProductsAndRender(currentFilter);
+            }
+        }
+        
+        function applyFilter(filter) {
+            currentFilter = filter;
+            
+            if (currentTab === 'home') {
+                getProductsAndRender(filter);
+            } else if (currentTab === 'nearby') {
+                getProductsNearby(selectedCityId, currentRadius, filter);
+            }
+        }
+        
         function getProductsAndRender(option = ''){
             $.ajax({
                 url: "/api/products" + '?sort=' + option,
@@ -121,7 +222,72 @@
                 $('#articlelist').html('<div class="col-md-12"><p>Une erreur est survenue lors de la recherche.</p></div>');
             });
         }
-
+        
+        function loadMapData() {
+            $.ajax({
+                url: "/api/products-map",
+            }).done(function(products) {
+                renderMap(products);
+            }).fail(function(error) {
+                console.error('Error fetching map data:', error);
+                $('#map').html('<div class="alert alert-danger">Une erreur est survenue lors du chargement de la carte.</div>');
+            });
+        }
+        
+        function renderMap(products) {
+            // Initialize map if not already done
+            if (!map) {
+                // Center on France
+                map = L.map('map').setView([46.603354, 1.888334], 6);
+                
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                // Initialize marker cluster group
+                markerClusterGroup = L.markerClusterGroup({
+                    disableClusteringAtZoom: 15,
+                    spiderfyOnMaxZoom: true,
+                    showCoverageOnHover: true,
+                    zoomToBoundsOnClick: true,
+                    maxClusterRadius: 50
+                });
+                
+                map.addLayer(markerClusterGroup);
+            } else {
+                // Clear existing markers
+                markerClusterGroup.clearLayers();
+            }
+            
+            // Add markers for each product
+            products.forEach(function(product) {
+                if (product.coordinates && product.coordinates.lat && product.coordinates.lng) {
+                    const marker = L.marker([product.coordinates.lat, product.coordinates.lng]);
+                    
+                    // Create popup content
+                    let popupContent = `
+                        <div style="width: 200px;">
+                            <h4><a href="/product/${product.id}">${product.name}</a></h4>
+                            <p>${product.description.substring(0, 50)}${product.description.length > 50 ? '...' : ''}</p>
+                            <p><i class="fa fa-map-marker"></i> ${product.city.ville_nom_reel}</p>
+                            <p>${product.views} vues</p>
+                            <a href="/product/${product.id}" class="btn btn-sm btn-primary">Voir détails</a>
+                        </div>
+                    `;
+                    
+                    marker.bindPopup(popupContent);
+                    markerClusterGroup.addLayer(marker);
+                }
+            });
+            
+            // Fit map to markers if there are any
+            if (products.length > 0) {
+                map.fitBounds(markerClusterGroup.getBounds(), { padding: [50, 50] });
+            }
+        }
+        
         function renderProduct($product){
              $('<div class="col-lg-4 col-sm-6 articleitem" id="article-pattern">' +
                 '                                <div class="b-article">' +
@@ -145,98 +311,24 @@
              .appendTo($('#articlelist'));
         }
         
-        function applyFilter(filter) {
-            currentFilter = filter;
-            
-            if (currentTab === 'home') {
-                getProductsAndRender(filter);
-            } else {
-                getProductsNearby(selectedCityId, currentRadius, filter);
-            }
-        }
-        
-        function initCityAutocomplete() {
-            $('#city-search').on('keyup', function() {
-                const query = $(this).val();
-                
-                if (query.length < 3) return;
-                
-                $.ajax({
-                    url: "/api/cities?query=" + query,
-                }).done(function(cities) {
-                    if (cities.length > 0) {
-                        // Show autocomplete dropdown
-                        const dropdown = $('<div id="city-autocomplete" class="dropdown-menu show"></div>');
-                        
-                        cities.forEach(function(cityId) {
-                            $.ajax({
-                                url: "/api/city?id=" + cityId,
-                            }).done(function(city) {
-                                $('<a class="dropdown-item" href="#" data-city-id="' + city.ville_id + '">' + 
-                                  city.ville_nom_reel + ' (' + city.ville_code_postal + ')</a>')
-                                .appendTo(dropdown)
-                                .on('click', function(e) {
-                                    e.preventDefault();
-                                    $('#city-search').val($(this).text());
-                                    selectedCityId = $(this).data('city-id');
-                                    $('#selected-city-id').val(selectedCityId);
-                                    $('#city-autocomplete').remove();
-                                });
-                            });
-                        });
-                        
-                        // Remove any existing dropdown
-                        $('#city-autocomplete').remove();
-                        
-                        // Add the new dropdown
-                        dropdown.insertAfter('#city-search');
-                    }
-                });
-            });
-            
-            // Close dropdown when clicking outside
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('#city-search, #city-autocomplete').length) {
-                    $('#city-autocomplete').remove();
-                }
-            });
-        }
-
         $( document ).ready(function() {
             // Initialize with home tab
             getProductsAndRender();
             
-            // Initialize city autocomplete
-            initCityAutocomplete();
-            
             // Tab switching
             $('#tab-home').on('click', function(e) {
                 e.preventDefault();
-                currentTab = 'home';
-                $(this).addClass('color-active');
-                $('#tab-nearby').removeClass('color-active');
-                $('#radius-control').hide();
-                getProductsAndRender(currentFilter);
+                switchTab('home');
             });
             
             $('#tab-nearby').on('click', function(e) {
                 e.preventDefault();
-                currentTab = 'nearby';
-                $(this).addClass('color-active');
-                $('#tab-home').removeClass('color-active');
-                $('#radius-control').show();
+                switchTab('nearby');
             });
             
-            // Radius slider
-            $('#radius-slider').on('input', function() {
-                currentRadius = $(this).val();
-                $('#radius-value').text(currentRadius);
-            });
-            
-            // Search nearby button
-            $('#search-nearby').on('click', function() {
-                selectedCityId = $('#selected-city-id').val();
-                getProductsNearby(selectedCityId, currentRadius, currentFilter);
+            $('#tab-map').on('click', function(e) {
+                e.preventDefault();
+                switchTab('map');
             });
         });
     </script>
