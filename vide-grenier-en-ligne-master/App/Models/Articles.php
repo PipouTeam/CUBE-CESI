@@ -160,7 +160,43 @@ class Articles extends Model {
         $stmt->execute();
     }
 
-
-
-
+    /**
+     * Get articles within a radius of a given city
+     * 
+     * @param int $cityId ID of the center city
+     * @param float $radiusKm Radius in kilometers
+     * @param string $filter Optional filter for sorting
+     * @return array Array of articles within the radius
+     * @throws Exception
+     */
+    public static function getWithinRadius($cityId, $radiusKm, $filter = '') {
+        $db = static::getDB();
+        
+        // Get cities within the radius
+        $citiesInRadius = Cities::findCitiesWithinRadius($cityId, $radiusKm);
+        
+        if (empty($citiesInRadius)) {
+            return [];
+        }
+        
+        // Convert array of city IDs to a comma-separated string for the IN clause
+        $cityIdsString = implode(',', $citiesInRadius);
+        
+        $query = "SELECT * FROM articles WHERE ville_id IN ($cityIdsString)";
+        
+        switch ($filter){
+            case 'views':
+                $query .= ' ORDER BY articles.views DESC';
+                break;
+            case 'date':
+                $query .= ' ORDER BY articles.published_date DESC';
+                break;
+            case '':
+                break;
+        }
+        
+        $stmt = $db->query($query);
+        
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

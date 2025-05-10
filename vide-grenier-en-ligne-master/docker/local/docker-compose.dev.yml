@@ -23,7 +23,7 @@ services:
     ports:
       - 3307:3306
     volumes:
-      - ../../sql/import.sql:/docker-entrypoint-initdb.d/import.sql  
+      - ../../sql/dev/:/docker-entrypoint-initdb.d/
   phpma:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin-Cube

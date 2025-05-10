@@ -14,12 +14,13 @@
                             <div class="col-lg-10 col-sm-10 col-xs-8">
                                 <ul class="list-inline">
                                     <li>
-                                        <a href="#" class="color-active">
+                                        <a href="#" class="color-active" id="tab-home">
                                             <span class="visible-xs">À la une</span>
                                             <span class="hidden-xs">À la une</span>
                                         </a>
                                     </li>
-                                    <li><a href="#">Autour de moi</a></li>
+                                    <li><a href="#" id="tab-nearby">Autour de moi</a></li>
+                                    <li><a href="#" id="tab-map">Carte</a></li>
                                 </ul>
                             </div>
                             <div class="col-lg-2 col-sm-2 col-xs-4">
@@ -28,10 +29,10 @@
                                         Filtrer par <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        <li><a onclick="getProductsAndRender('views')"><i
+                                        <li><a onclick="applyFilter('views')"><i
                                                 class="cv cvicon-cv-calender"></i>
                                             Popularité</a></li>
-                                        <li><a onclick="getProductsAndRender('date')"><i
+                                        <li><a onclick="applyFilter('date')"><i
                                                 class="cv cvicon-cv-calender"></i>
                                             Récent</a></li>
                                     </ul>
@@ -39,6 +40,35 @@
                                 <div class="clearfix"></div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Radius slider for "Autour de moi" tab -->
+                    <div id="radius-control" style="display: none; padding: 15px; background-color: #f8f8f8; border-bottom: 1px solid #e8e8e8;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="city-search">Ville de référence:</label>
+                                    <input type="text" class="form-control" id="city-search" placeholder="Entrez une ville...">
+                                    <input type="hidden" id="selected-city-id" value="">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="radius-slider">Rayon de recherche: <span id="radius-value">10</span> km</label>
+                                    <input type="range" class="form-control-range" id="radius-slider" min="1" max="100" value="10">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button id="search-nearby" class="btn btn-primary">Rechercher</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Map container for "Carte" tab -->
+                    <div id="map-container" style="display: none;">
+                        <div id="map" style="height: 600px; width: 100%;"></div>
                     </div>
 
                     <div class="cb-content">
@@ -57,7 +87,106 @@
 
 {% block javascript %}
     <script type="text/javascript">
-
+        var map = null;
+        var markerClusterGroup = null;
+        var currentTab = 'home';
+        var currentFilter = '';
+        var selectedCityId = '';
+        var currentRadius = 10;
+        
+        $(document).ready(function () {
+            // Initial load of featured articles
+            getProductsAndRender();
+            
+            // City search autocomplete
+            $('#city-search').on('keyup', function() {
+                var query = $(this).val();
+                if (query.length >= 3) {
+                    $.ajax({
+                        url: "/api/cities?query=" + query,
+                    }).done(function(cities) {
+                        var datalist = $('#cities-list');
+                        datalist.empty();
+                        
+                        cities.forEach(function(city) {
+                            var option = $('<option></option>').attr('value', city.ville_nom_reel + ' (' + city.ville_code_postal + ')').data('id', city.ville_id);
+                            datalist.append(option);
+                        });
+                        
+                        // Handle selection
+                        $('#city-search').on('change', function() {
+                            var selectedValue = $(this).val();
+                            var selectedOption = $('#cities-list option').filter(function() {
+                                return $(this).val() === selectedValue;
+                            });
+                            
+                            if (selectedOption.length) {
+                                selectedCityId = selectedOption.data('id');
+                                $('#selected-city-id').val(selectedCityId);
+                            }
+                        });
+                    });
+                }
+            });
+            
+            // Radius slider
+            $('#radius-slider').on('input', function() {
+                currentRadius = $(this).val();
+                $('#radius-value').text(currentRadius);
+            });
+            
+            // Search nearby button
+            $('#search-nearby').on('click', function() {
+                if (selectedCityId) {
+                    getProductsNearby(selectedCityId, currentRadius, currentFilter);
+                } else {
+                    alert('Veuillez sélectionner une ville');
+                }
+            });
+        });
+        
+        function switchTab(tab) {
+            // Hide all tab content
+            $('#radius-control').hide();
+            $('#map-container').hide();
+            $('#articlelist').parent().show();
+            
+            // Show the selected tab content
+            if (tab === 'nearby') {
+                $('#radius-control').show();
+            } else if (tab === 'map') {
+                $('#map-container').show();
+                $('#articlelist').parent().hide();
+                if (!map) {
+                    loadMapData();
+                } else {
+                    // Force map to recalculate size
+                    map.invalidateSize();
+                }
+            }
+            
+            // Update active tab
+            $('.nav-tabs li').removeClass('active');
+            $('#' + tab + '-tab').addClass('active');
+            
+            currentTab = tab;
+            
+            // Load appropriate content
+            if (tab === 'home') {
+                getProductsAndRender(currentFilter);
+            }
+        }
+        
+        function applyFilter(filter) {
+            currentFilter = filter;
+            
+            if (currentTab === 'home') {
+                getProductsAndRender(filter);
+            } else if (currentTab === 'nearby') {
+                getProductsNearby(selectedCityId, currentRadius, filter);
+            }
+        }
+        
         function getProductsAndRender(option = ''){
             $.ajax({
                 url: "/api/products" + '?sort=' + option,
@@ -68,7 +197,97 @@
                 }
             });
         }
-
+        
+        function getProductsNearby(cityId, radius, option = ''){
+            if (!cityId) {
+                alert('Veuillez sélectionner une ville de référence');
+                return;
+            }
+            
+            $.ajax({
+                url: "/api/products-nearby" + '?city_id=' + cityId + '&radius=' + radius + '&sort=' + option,
+            }).done(function(result) {
+                $('#articlelist').empty();
+                
+                if (result.length === 0) {
+                    $('#articlelist').html('<div class="col-md-12"><p>Aucun article trouvé dans ce rayon.</p></div>');
+                    return;
+                }
+                
+                for(let i = 0; i < result.length; i++){
+                    renderProduct(result[i])
+                }
+            }).fail(function(error) {
+                console.error('Error fetching nearby products:', error);
+                $('#articlelist').html('<div class="col-md-12"><p>Une erreur est survenue lors de la recherche.</p></div>');
+            });
+        }
+        
+        function loadMapData() {
+            $.ajax({
+                url: "/api/products-map",
+            }).done(function(products) {
+                renderMap(products);
+            }).fail(function(error) {
+                console.error('Error fetching map data:', error);
+                $('#map').html('<div class="alert alert-danger">Une erreur est survenue lors du chargement de la carte.</div>');
+            });
+        }
+        
+        function renderMap(products) {
+            // Initialize map if not already done
+            if (!map) {
+                // Center on France
+                map = L.map('map').setView([46.603354, 1.888334], 6);
+                
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                // Initialize marker cluster group
+                markerClusterGroup = L.markerClusterGroup({
+                    disableClusteringAtZoom: 15,
+                    spiderfyOnMaxZoom: true,
+                    showCoverageOnHover: true,
+                    zoomToBoundsOnClick: true,
+                    maxClusterRadius: 50
+                });
+                
+                map.addLayer(markerClusterGroup);
+            } else {
+                // Clear existing markers
+                markerClusterGroup.clearLayers();
+            }
+            
+            // Add markers for each product
+            products.forEach(function(product) {
+                if (product.coordinates && product.coordinates.lat && product.coordinates.lng) {
+                    const marker = L.marker([product.coordinates.lat, product.coordinates.lng]);
+                    
+                    // Create popup content
+                    let popupContent = `
+                        <div style="width: 200px;">
+                            <h4><a href="/product/${product.id}">${product.name}</a></h4>
+                            <p>${product.description.substring(0, 50)}${product.description.length > 50 ? '...' : ''}</p>
+                            <p><i class="fa fa-map-marker"></i> ${product.city.ville_nom_reel}</p>
+                            <p>${product.views} vues</p>
+                            <a href="/product/${product.id}" class="btn btn-sm btn-primary">Voir détails</a>
+                        </div>
+                    `;
+                    
+                    marker.bindPopup(popupContent);
+                    markerClusterGroup.addLayer(marker);
+                }
+            });
+            
+            // Fit map to markers if there are any
+            if (products.length > 0) {
+                map.fitBounds(markerClusterGroup.getBounds(), { padding: [50, 50] });
+            }
+        }
+        
         function renderProduct($product){
              $('<div class="col-lg-4 col-sm-6 articleitem" id="article-pattern">' +
                 '                                <div class="b-article">' +
@@ -78,6 +297,10 @@
                 '                                    </div>' +
                 '                                    <div class="v-desc">' +
                 '                                        <a href="/product/'+ $product.id + '">'+ $product.name+'</a>' +
+                '                                        <span style="float:right; font-size:0.8em; color:#777;">' + 
+                '                                           <i class="fa fa-map-marker"></i> ' + 
+                '                                           ' + (($product.city && $product.city.ville_nom_reel) ? $product.city.ville_nom_reel : 'Lieu non spécifié') + 
+                '                                        </span>' +
                 '                                    </div>' +
                 '                                    <p>'+ $product.description.slice(0, 20) + '...</p>' +
                 '                                    <div class="v-views">' +
@@ -87,9 +310,26 @@
                 '</div>')
              .appendTo($('#articlelist'));
         }
-
+        
         $( document ).ready(function() {
+            // Initialize with home tab
             getProductsAndRender();
+            
+            // Tab switching
+            $('#tab-home').on('click', function(e) {
+                e.preventDefault();
+                switchTab('home');
+            });
+            
+            $('#tab-nearby').on('click', function(e) {
+                e.preventDefault();
+                switchTab('nearby');
+            });
+            
+            $('#tab-map').on('click', function(e) {
+                e.preventDefault();
+                switchTab('map');
+            });
         });
     </script>
 {% endblock %}
