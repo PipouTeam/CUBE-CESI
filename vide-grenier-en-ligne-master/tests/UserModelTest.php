@@ -225,5 +225,223 @@ class UserModelTest extends TestCase {
         $this->assertFalse($result);
     }
 
+    public function testCreateUserWithInvalidEmail() {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+        
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->expects($this->never())
+                      ->method('execute');
+        
+        User::setDB($mockPDO);
+        
+        $invalidData = [
+            'username' => 'TestUser',
+            'email' => 'invalid-email', // Invalid email format
+            'password' => 'password123',
+            'salt' => 'randomsalt'
+        ];
+        
+        $result = User::createUser($invalidData);
+        $this->assertFalse($result);
+    }
+
+    public function testCreateUserWithDuplicateEmail() {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+        
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willThrowException(new \PDOException('Duplicate entry'));
+        
+        User::setDB($mockPDO);
+        
+        $userData = [
+            'username' => 'TestUser',
+            'email' => 'existing@example.com',
+            'password' => 'password123',
+            'salt' => 'randomsalt'
+        ];
+        
+        $result = User::createUser($userData);
+        $this->assertFalse($result);
+    }
+
+    public function testGetByLoginWithExistingUser() {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+        
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(true);
+        $mockStatement->method('fetch')->willReturn([
+            'id' => 1,
+            'username' => 'TestUser',
+            'email' => 'test@example.com',
+            'password' => 'hashedpassword',
+            'salt' => 'randomsalt'
+        ]);
+        
+        User::setDB($mockPDO);
+        
+        $result = User::getByLogin('test@example.com');
+        
+        $this->assertIsArray($result);
+        $this->assertEquals('TestUser', $result['username']);
+        $this->assertEquals('test@example.com', $result['email']);
+    }
     
+    public function testGetByLoginWithNonExistingUser() {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+        
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(true);
+        $mockStatement->method('fetch')->willReturn(false);
+        
+        User::setDB($mockPDO);
+        
+        $result = User::getByLogin('nonexistent@example.com');
+        
+        $this->assertFalse($result);
+    }
+
+    public function testLoginWithCorrectPasswordButDifferentCase() {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+        
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(true);
+        $mockStatement->method('fetch')->willReturn([
+            'id' => 1,
+            'username' => 'TestUser',
+            'email' => 'test@example.com',
+            'password' => hash('sha256', 'Password123' . 'randomsalt'),
+            'salt' => 'randomsalt'
+        ]);
+        
+        User::setDB($mockPDO);
+        
+        $credentials = [
+            'email' => 'test@example.com',
+            'password' => 'password123' // Different case from stored password
+        ];
+        
+        $result = User::login($credentials);
+        
+        // Should fail because hash is case-sensitive
+        $this->assertFalse($result);
+    }
+
+    public function testGetUserByExpiredRememberToken() {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+        
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(true);
+        $mockStatement->method('fetch')->willReturn(false); // No user found because token expired
+        
+        User::setDB($mockPDO);
+        
+        $token = 'expiredToken';
+        
+        $result = User::getUserByRememberToken($token);
+        
+        $this->assertFalse($result);
+    }
+
+    public function testCreateUserWithEmptyUsername() {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+        
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->expects($this->never())
+                      ->method('execute');
+        
+        User::setDB($mockPDO);
+        
+        $invalidData = [
+            'username' => '', // Empty username
+            'email' => 'test@example.com',
+            'password' => 'password123',
+            'salt' => 'randomsalt'
+        ];
+        
+        $result = User::createUser($invalidData);
+        $this->assertFalse($result);
+    }
+    
+    public function testLoginWithEmptyPassword() {
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+        
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(true);
+        $mockStatement->method('fetch')->willReturn([
+            'id' => 1,
+            'username' => 'TestUser',
+            'email' => 'test@example.com',
+            'password' => hash('sha256', '' . 'randomsalt'), // Empty password hash
+            'salt' => 'randomsalt'
+        ]);
+        
+        User::setDB($mockPDO);
+        
+        $credentials = [
+            'email' => 'test@example.com',
+            'password' => '' // Empty password
+        ];
+        
+        $result = User::login($credentials);
+        
+        // Should match because we're comparing empty password hash
+        $this->assertIsArray($result);
+    }
+
+    public function testAutoLoginAfterRegistration() {
+        // This would test a method that should exist to handle auto-login after registration
+        // Since I don't see this method in the User model, this test suggests you should implement it
+        
+        $mockPDO = $this->createMock(PDO::class);
+        $mockStatement = $this->createMock(PDOStatement::class);
+        
+        $mockPDO->method('prepare')->willReturn($mockStatement);
+        $mockStatement->method('execute')->willReturn(true);
+        $mockPDO->method('lastInsertId')->willReturn("1");
+        
+        User::setDB($mockPDO);
+        
+        $userData = [
+            'username' => 'NewUser',
+            'email' => 'new@example.com',
+            'password' => 'newpassword',
+            'salt' => 'newsalt'
+        ];
+        
+        // This suggests implementing a method like:
+        // public static function registerAndLogin($userData)
+        
+        // For now, we can test if the existing methods would support this functionality
+        $userId = User::createUser($userData);
+        $this->assertEquals("1", $userId);
+        
+        // Then test if we can retrieve the user
+        $mockStatement2 = $this->createMock(PDOStatement::class);
+        $mockPDO->method('prepare')->willReturn($mockStatement2);
+        $mockStatement2->method('execute')->willReturn(true);
+        $mockStatement2->method('fetch')->willReturn([
+            'id' => 1,
+            'username' => 'NewUser',
+            'email' => 'new@example.com',
+            'password' => hash('sha256', 'newpassword' . 'newsalt'),
+            'salt' => 'newsalt'
+        ]);
+        
+        $loginData = [
+            'email' => 'new@example.com',
+            'password' => 'newpassword'
+        ];
+        
+        $user = User::login($loginData);
+        $this->assertIsArray($user);
+        $this->assertEquals('NewUser', $user['username']);
+    }
 }
