@@ -142,21 +142,20 @@
                         var suggestions = $('#city-suggestions');
                         suggestions.empty();
                         
-                        // Limit to 10 cities
-                        var limit = Math.min(cities.length, 10);
-                        
-                        if (limit > 0) {
-                            for (var i = 0; i < limit; i++) {
-                                var cityId = cities[i];
-                                var cityName = 'Ville #' + cityId;
+                        if (cities.length > 0) {
+                            for (var i = 0; i < cities.length; i++) {
+                                var city = cities[i];
+                                var cityId = city.ville_id;
+                                var cityName = city.ville_nom_reel + ' (' + city.ville_code_postal + ')';
                                 
                                 var item = $('<a href="#" class="list-group-item"></a>')
                                     .text(cityName)
                                     .data('city-id', cityId)
+                                    .data('city-name', cityName)
                                     .click(function(e) {
                                         e.preventDefault();
                                         var selectedId = $(this).data('city-id');
-                                        var selectedName = $(this).text();
+                                        var selectedName = $(this).data('city-name');
                                         
                                         // Set the selected city
                                         $('#city-search').val(selectedName);
@@ -166,7 +165,7 @@
                                         // Hide the suggestions
                                         $('#city-suggestions').hide();
                                         
-                                        console.log('City selected from suggestions, ID:', selectedId);
+                                        console.log('City selected from suggestions, ID:', selectedId, 'Name:', selectedName);
                                     });
                                 
                                 suggestions.append(item);
@@ -218,8 +217,8 @@
                             async: false
                         }).done(function(cities) {
                             if (cities.length > 0) {
-                                selectedCityId = cities[0];
-                                console.log('Using first city from search results:', selectedCityId);
+                                selectedCityId = cities[0].ville_id;
+                                console.log('Using first city from search results:', selectedCityId, 'Name:', cities[0].ville_nom_reel);
                                 getProductsNearby(selectedCityId, currentRadius, currentFilter);
                             } else {
                                 console.log('No city found, showing alert');
