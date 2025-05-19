@@ -48,7 +48,15 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="city-search">Ville de référence:</label>
-                                    <input type="text" class="form-control" id="city-search" placeholder="Entrez une ville...">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="city-search" placeholder="Entrez une ville..." autocomplete="off">
+                                        <div class="input-group-btn">
+                                            <button type="button" class="btn btn-default" id="search-city-btn">
+                                                <i class="glyphicon glyphicon-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="city-suggestions" class="list-group" style="position: absolute; z-index: 1000; width: 100%; max-height: 300px; overflow-y: auto; display: none;"></div>
                                     <input type="hidden" id="selected-city-id" value="">
                                 </div>
                             </div>
@@ -98,34 +106,94 @@
             // Initial load of featured articles
             getProductsAndRender();
             
-            // City search autocomplete
+            // Search city button click handler
+            $('#search-city-btn').on('click', function() {
+                searchCities();
+            });
+            
+            // City search on enter key
+            $('#city-search').on('keypress', function(e) {
+                if (e.which === 13) { // Enter key
+                    searchCities();
+                    e.preventDefault();
+                }
+            });
+            
+            // Show suggestions as user types
             $('#city-search').on('keyup', function() {
-                var query = $(this).val();
+                // Debounce the search to avoid too many requests
+                clearTimeout($(this).data('timer'));
+                var self = this;
+                var timer = setTimeout(function() {
+                    searchCities();
+                }, 300); // Wait 300ms after typing stops
+                $(self).data('timer', timer);
+            });
+            
+            // Function to search cities
+            function searchCities() {
+                var query = $('#city-search').val();
                 if (query.length >= 3) {
+                    console.log('Searching for city: ' + query);
                     $.ajax({
                         url: "/api/cities?query=" + query,
                     }).done(function(cities) {
-                        var datalist = $('#cities-list');
-                        datalist.empty();
+                        console.log('Cities found:', cities);
+                        var suggestions = $('#city-suggestions');
+                        suggestions.empty();
                         
-                        cities.forEach(function(city) {
-                            var option = $('<option></option>').attr('value', city.ville_nom_reel + ' (' + city.ville_code_postal + ')').data('id', city.ville_id);
-                            datalist.append(option);
-                        });
+                        // Limit to 10 cities
+                        var limit = Math.min(cities.length, 10);
                         
-                        // Handle selection
-                        $('#city-search').on('change', function() {
-                            var selectedValue = $(this).val();
-                            var selectedOption = $('#cities-list option').filter(function() {
-                                return $(this).val() === selectedValue;
-                            });
-                            
-                            if (selectedOption.length) {
-                                selectedCityId = selectedOption.data('id');
-                                $('#selected-city-id').val(selectedCityId);
+                        if (limit > 0) {
+                            for (var i = 0; i < limit; i++) {
+                                var cityId = cities[i];
+                                var cityName = 'Ville #' + cityId;
+                                
+                                var item = $('<a href="#" class="list-group-item"></a>')
+                                    .text(cityName)
+                                    .data('city-id', cityId)
+                                    .click(function(e) {
+                                        e.preventDefault();
+                                        var selectedId = $(this).data('city-id');
+                                        var selectedName = $(this).text();
+                                        
+                                        // Set the selected city
+                                        $('#city-search').val(selectedName);
+                                        selectedCityId = selectedId;
+                                        $('#selected-city-id').val(selectedId);
+                                        
+                                        // Hide the suggestions
+                                        $('#city-suggestions').hide();
+                                        
+                                        console.log('City selected from suggestions, ID:', selectedId);
+                                    });
+                                
+                                suggestions.append(item);
                             }
-                        });
+                            
+                            // Show the suggestions
+                            suggestions.show();
+                        } else {
+                            suggestions.hide();
+                        }
                     });
+                } else {
+                    $('#city-suggestions').hide();
+                }
+            }
+            
+            // Hide suggestions when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#city-search, #city-suggestions').length) {
+                    $('#city-suggestions').hide();
+                }
+            });
+            
+            // Show suggestions when focusing on the search field
+            $('#city-search').on('focus', function() {
+                if ($(this).val().length >= 3) {
+                    $('#city-suggestions').show();
                 }
             });
             
@@ -137,10 +205,34 @@
             
             // Search nearby button
             $('#search-nearby').on('click', function() {
+                console.log('Search nearby clicked, selectedCityId:', selectedCityId);
+                
                 if (selectedCityId) {
                     getProductsNearby(selectedCityId, currentRadius, currentFilter);
                 } else {
-                    alert('Veuillez sélectionner une ville');
+                    // If no city is selected, try to search again
+                    var query = $('#city-search').val();
+                    if (query.length >= 3) {
+                        $.ajax({
+                            url: "/api/cities?query=" + query,
+                            async: false
+                        }).done(function(cities) {
+                            if (cities.length > 0) {
+                                selectedCityId = cities[0];
+                                console.log('Using first city from search results:', selectedCityId);
+                                getProductsNearby(selectedCityId, currentRadius, currentFilter);
+                            } else {
+                                console.log('No city found, showing alert');
+                                alert('Veuillez sélectionner une ville');
+                            }
+                        }).fail(function() {
+                            console.log('City search failed, showing alert');
+                            alert('Veuillez sélectionner une ville');
+                        });
+                    } else {
+                        console.log('No city selected, showing alert');
+                        alert('Veuillez sélectionner une ville');
+                    }
                 }
             });
         });
@@ -199,7 +291,9 @@
         }
         
         function getProductsNearby(cityId, radius, option = ''){
+            console.log('getProductsNearby called with cityId:', cityId, 'radius:', radius);
             if (!cityId) {
+                console.log('No cityId provided to getProductsNearby');
                 alert('Veuillez sélectionner une ville de référence');
                 return;
             }
