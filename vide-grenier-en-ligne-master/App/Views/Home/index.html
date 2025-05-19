@@ -134,11 +134,9 @@
             function searchCities() {
                 var query = $('#city-search').val();
                 if (query.length >= 3) {
-                    console.log('Searching for city: ' + query);
                     $.ajax({
                         url: "/api/cities?query=" + query,
                     }).done(function(cities) {
-                        console.log('Cities found:', cities);
                         var suggestions = $('#city-suggestions');
                         suggestions.empty();
                         
@@ -164,8 +162,6 @@
                                         
                                         // Hide the suggestions
                                         $('#city-suggestions').hide();
-                                        
-                                        console.log('City selected from suggestions, ID:', selectedId, 'Name:', selectedName);
                                     });
                                 
                                 suggestions.append(item);
@@ -204,8 +200,6 @@
             
             // Search nearby button
             $('#search-nearby').on('click', function() {
-                console.log('Search nearby clicked, selectedCityId:', selectedCityId);
-                
                 if (selectedCityId) {
                     getProductsNearby(selectedCityId, currentRadius, currentFilter);
                 } else {
@@ -218,18 +212,14 @@
                         }).done(function(cities) {
                             if (cities.length > 0) {
                                 selectedCityId = cities[0].ville_id;
-                                console.log('Using first city from search results:', selectedCityId, 'Name:', cities[0].ville_nom_reel);
                                 getProductsNearby(selectedCityId, currentRadius, currentFilter);
                             } else {
-                                console.log('No city found, showing alert');
                                 alert('Veuillez sélectionner une ville');
                             }
                         }).fail(function() {
-                            console.log('City search failed, showing alert');
                             alert('Veuillez sélectionner une ville');
                         });
                     } else {
-                        console.log('No city selected, showing alert');
                         alert('Veuillez sélectionner une ville');
                     }
                 }
@@ -290,9 +280,7 @@
         }
         
         function getProductsNearby(cityId, radius, option = ''){
-            console.log('getProductsNearby called with cityId:', cityId, 'radius:', radius);
             if (!cityId) {
-                console.log('No cityId provided to getProductsNearby');
                 alert('Veuillez sélectionner une ville de référence');
                 return;
             }
