@@ -23,6 +23,7 @@ services:
     ports:
       - 3307:3306
     volumes:
+      - mysql-data:/var/lib/mysql
       - ../../sql/dev/:/docker-entrypoint-initdb.d/
   phpma:
     image: phpmyadmin/phpmyadmin
@@ -34,3 +35,5 @@ services:
       PMA_PASSWORD: pass
     ports:
       - 8899:80
+volumes:
+  mysql-data:
