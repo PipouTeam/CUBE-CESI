@@ -224,6 +224,4 @@ class UserModelTest extends TestCase {
 
         $this->assertFalse($result);
     }
-
-    
 }
