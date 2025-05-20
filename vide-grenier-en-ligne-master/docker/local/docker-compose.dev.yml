@@ -23,8 +23,8 @@ services:
     ports:
       - 3307:3306
     volumes:
-      - mysql-data:/var/lib/mysql
-      - ../../sql/import.sql:/docker-entrypoint-initdb.d/import.sql
+      - mysql-data-dev:/var/lib/mysql
+      - ../../sql/dev:/docker-entrypoint-initdb.d
   phpma:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin-Cube
@@ -36,4 +36,4 @@ services:
     ports:
       - 8899:80
 volumes:
-  mysql-data:
+  mysql-data-dev:
