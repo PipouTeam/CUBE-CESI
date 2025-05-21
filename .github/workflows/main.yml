@@ -1,0 +1,63 @@
+name: PHP Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: pass
+          MYSQL_DATABASE: vide-grenier
+          MYSQL_USER: test
+          MYSQL_PASSWORD: pass
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, intl, pdo, pdo_mysql, mysqli
+        coverage: xdebug
+    
+    - name: Verify MySQL connection
+      run: |
+        mysql --host 127.0.0.1 --port 3306 -utest -ppass -e "SHOW DATABASES;"
+    
+    - name: Initialize database
+      run: |
+        mysql --host 127.0.0.1 --port 3306 -utest -ppass vide-grenier < vide-grenier-en-ligne-master/sql/dev/init.sql || echo "No init.sql found, skipping"
+    
+    - name: Install dependencies
+      working-directory: ./vide-grenier-en-ligne-master
+      run: composer install --prefer-dist --no-progress
+    
+    - name: Run tests
+      working-directory: ./vide-grenier-en-ligne-master
+      run: |
+        echo "Running PHPUnit tests"
+        vendor/bin/phpunit --testdox tests/
+    
+    - name: Run specific test suites
+      working-directory: ./vide-grenier-en-ligne-master
+      run: |
+        echo "Running Article tests"
+        vendor/bin/phpunit --testdox tests/Article/
+        
+        echo "Running User tests"
+        vendor/bin/phpunit --testdox tests/User/
+        
+        echo "Running Utility tests"
+        vendor/bin/phpunit --testdox tests/Utility/
