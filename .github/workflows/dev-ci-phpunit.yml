@@ -15,5 +15,5 @@ jobs:
 
       - name: Run PHPUnit tests
         run: |
-          ./vide-grenier-en-ligne-master/vendor/bin/phpunit tests/
+          ./vendor/bin/phpunit tests/
           echo "Adios"
