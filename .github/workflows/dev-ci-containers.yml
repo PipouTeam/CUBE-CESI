@@ -20,7 +20,7 @@ jobs:
       - name: Wait for MySQL to be ready
         run: |
           echo "Waiting for MySQL to be ready..."
-          until docker exec mysql8-Cube mysqladmin ping -h "localhost" --silent; do 
+          until docker exec dev-db-1 mysqladmin ping -h "localhost" --silent; do 
             sleep 2
           done
           echo "MySQL is ready."
@@ -28,18 +28,18 @@ jobs:
       - name: Wait for PHP container to be ready
         run: |
           echo "Waiting for PHP container to be ready..."
-          until docker exec php82-Cube php -v > /dev/null 2>&1; do
+          until docker exec dev-php-1 php -v > /dev/null 2>&1; do
             sleep 2
           done
           echo "PHP container is ready."
 
-      - name: Wait for phpMyAdmin to be ready
+      - name: Wait for phpMyAdmin container to be ready
         run: |
-          echo "Waiting for phpMyAdmin to be ready..."
-          until curl -s http://localhost:8899 | grep -q "phpMyAdmin"; do
+          echo "Waiting for phpMyAdmin container to be ready..."
+          until docker exec dev-phpma-1 ps aux | grep -q 'apache2'; do
             sleep 2
           done
-          echo "phpMyAdmin is ready."
+          echo "phpMyAdmin container is ready."
 
       - name: List running containers
         run: docker ps
