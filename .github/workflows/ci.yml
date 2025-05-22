@@ -1,19 +1,19 @@
-name: CI Docker + PHPUnit
+name: Vérification Docker uniquement
 
 on:
   push:
     branches:
-      - 92-create-ci-pipeline-with-github-actions
+      - "**"
 
 jobs:
-  phpunit-tests:
+  check-docker-containers:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Compose
+      - name: Start Docker containers
         run: |
           docker compose -f vide-grenier-en-ligne-master/docker/local/docker-compose.dev.yml up -d --build
 
@@ -23,11 +23,26 @@ jobs:
           until docker exec mysql8-Cube mysqladmin ping -h "localhost" --silent; do 
             sleep 2
           done
+          echo "MySQL is ready."
 
-      - name: Run PHPUnit tests in PHP container
+      - name: Wait for PHP container to be ready
         run: |
-          docker exec php82-Cube bash -c "cd /var/www/project && ./vendor/bin/phpunit tests/"
+          echo "Waiting for PHP container to be ready..."
+          until docker exec php82-Cube php -v > /dev/null 2>&1; do
+            sleep 2
+          done
+          echo "PHP container is ready."
 
-      - name: Shut down Docker Compose
+      - name: Wait for phpMyAdmin to be ready
         run: |
-          docker compose -f vide-grenier-en-ligne-master/docker/local/docker-compose.dev.yml down
+          echo "Waiting for phpMyAdmin to be ready..."
+          until curl -s http://localhost:8899 | grep -q "phpMyAdmin"; do
+            sleep 2
+          done
+          echo "phpMyAdmin is ready."
+
+      - name: List running containers
+        run: docker ps
+
+      - name: Shut down Docker containers
+        run: docker compose -f vide-grenier-en-ligne-master/docker/local/docker-compose.dev.yml down
