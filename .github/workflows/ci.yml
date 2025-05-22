@@ -15,7 +15,7 @@ jobs:
 
       - name: Set up Docker Compose
         run: |
-          docker compose -f docker-compose.dev.yml up --build
+          docker compose -f vide-grenier-en-ligne-master/docker/local/docker-compose.dev.yml up --build
 
       - name: Wait for MySQL to be ready
         run: |
@@ -26,7 +26,7 @@ jobs:
 
       - name: Run PHPUnit tests in PHP container
         run: |
-          docker exec php82-Cube bash -c "cd /var/www/project && ./vendor/bin/phpunit"
+          docker exec php82-Cube bash -c "cd /var/www/project && vide-grenier-en-ligne-master/docker/vendor/bin/phpunit"
 
       - name: Shut down Docker Compose
-        run: docker-compose -f docker-compose.yml down
+        run: docker-compose -f vide-grenier-en-ligne-master/docker/local/docker-compose.yml down
