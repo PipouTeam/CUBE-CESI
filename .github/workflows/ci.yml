@@ -19,10 +19,6 @@ jobs:
       - name: Checkout repository #copie du code dans la VM
         uses: actions/checkout@v4
 
-      - name: Set up Docker Compose #lancement des dockers
-        run: |
-          docker-compose -f docker-compose.yml up -d --build 
-
       #tests phpunit ne se lancent que quand la BDD MySQL est OK, on ping pour vérifier que sql répond
       - name: Wait for MySQL to be ready
         run: |
