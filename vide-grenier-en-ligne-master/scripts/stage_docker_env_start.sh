@@ -1,9 +1,9 @@
 #!/bin/bash
 
 echo "Stopping all environments..."
-docker compose -f docker/docker-compose.dev.yml down
-docker compose -f docker/docker-compose.stage.yml down
-docker compose -f docker/docker-compose.prod.yml down
+docker compose -f docker/docker-compose.dev.yml --project-name dev down
+docker compose -f docker/docker-compose.stage.yml --project-name stage down
+docker compose -f docker/docker-compose.prod.yml --project-name prod down
 
 echo "Starting staging environment..."
-docker compose -f docker/docker-compose.stage.yml up --build
+docker stack rm vide-grenier-stage
