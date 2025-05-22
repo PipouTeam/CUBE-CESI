@@ -1,0 +1,48 @@
+name: Containers checking
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  check-docker-containers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start Docker containers
+        run: |
+          docker compose -f vide-grenier-en-ligne-master/docker/local/docker-compose.dev.yml up -d --build
+
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          until docker exec mysql8-Cube mysqladmin ping -h "localhost" --silent; do 
+            sleep 2
+          done
+          echo "MySQL is ready."
+
+      - name: Wait for PHP container to be ready
+        run: |
+          echo "Waiting for PHP container to be ready..."
+          until docker exec php82-Cube php -v > /dev/null 2>&1; do
+            sleep 2
+          done
+          echo "PHP container is ready."
+
+      - name: Wait for phpMyAdmin to be ready
+        run: |
+          echo "Waiting for phpMyAdmin to be ready..."
+          until curl -s http://localhost:8899 | grep -q "phpMyAdmin"; do
+            sleep 2
+          done
+          echo "phpMyAdmin is ready."
+
+      - name: List running containers
+        run: docker ps
+
+      - name: Shut down Docker containers
+        run: ./vide-grenier-en-ligne-master/scripts/all_stop.sh
