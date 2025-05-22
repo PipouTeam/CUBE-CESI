@@ -15,7 +15,7 @@ jobs:
 
       - name: Start Docker containers
         run: |
-          docker compose -f vide-grenier-en-ligne-master/docker/local/docker-compose.dev.yml up -d --build
+          docker compose -f vide-grenier-en-ligne-master/docker/docker-compose.dev.yml up -d --build
 
       - name: Wait for MySQL to be ready
         run: |
