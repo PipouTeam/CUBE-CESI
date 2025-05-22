@@ -26,7 +26,7 @@ jobs:
 
       - name: Run PHPUnit tests in PHP container
         run: |
-          docker exec php82-Cube bash -c "cd /var/www/project && ./vendor/phpunit"
+          docker exec php82-Cube bash -c "cd /var/www/project && ./vendor/bin/phpunit tests/"
 
       - name: Shut down Docker Compose
         run: |
