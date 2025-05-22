@@ -27,6 +27,13 @@ class Product extends \Core\Controller
 
                 $f = $_POST;
 
+                // Vérification et conversion du city_id en ville_id
+                if (isset($f['city_id']) && !empty($f['city_id'])) {
+                    $f['ville_id'] = (int)$f['city_id'];
+                } else {
+                    throw new \Exception("Veuillez sélectionner une ville");
+                }
+
                 $f['user_id'] = $_SESSION['user']['id'];
                 $id = Articles::save($f);
 
