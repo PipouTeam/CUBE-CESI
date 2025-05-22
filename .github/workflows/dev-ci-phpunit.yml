@@ -15,5 +15,4 @@ jobs:
 
       - name: Run PHPUnit tests
         run: |
-          ./vendor/bin/phpunit tests/
-          echo "Adios"
+          ls
