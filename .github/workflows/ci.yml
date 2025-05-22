@@ -4,22 +4,19 @@ on:
   push:
     branches:
       - 92-create-ci-pipeline-with-github-actions
-    # ou change selon ta branche principale
 
 jobs:
   phpunit-tests:
-    runs-on: ubuntu-latest #lancement sur une VM Ubuntu
-
-    services:
-      docker:
-        image: docker:20.10.16 #déclare un service Docker pour s’assurer que Docker est ok dans l’environnement -optionnel
-        options: --privileged #pour avoir les droits - optionnel
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository #copie du code dans la VM
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      #tests phpunit ne se lancent que quand la BDD MySQL est OK, on ping pour vérifier que sql répond
+      - name: Set up Docker Compose
+        run: |
+          docker compose -f docker-compose.dev.yml up --build
+
       - name: Wait for MySQL to be ready
         run: |
           echo "Waiting for MySQL to be ready..."
@@ -27,11 +24,7 @@ jobs:
             sleep 2
           done
 
-      - name: Install dependencies with Composer
-        run: |
-          docker exec php82-Cube bash -c "cd /var/www/project && composer install"
-
-      - name: Run PHPUnit tests in PHP container #lancement des tests PHP UNit si BDD OK
+      - name: Run PHPUnit tests in PHP container
         run: |
           docker exec php82-Cube bash -c "cd /var/www/project && ./vendor/bin/phpunit"
 
