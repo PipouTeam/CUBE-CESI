@@ -273,6 +273,12 @@
                 url: "/api/products" + '?sort=' + option,
             }).done(function(result) {
                 $('#articlelist').empty();
+
+                if (result.length === 0) {
+                    $('#articlelist').html('<div class="col-md-12 text-center d-flex align-item-center" style="height: 59vh;"><h3 ">Il n’y a pas encore d’articles ici... Et si vous étiez le premier à en ajouter ?</h3></div>');
+                    return;
+                }
+
                 for(let i = 0; i < result.length; i++){
                     renderProduct(result[i])
                 }
