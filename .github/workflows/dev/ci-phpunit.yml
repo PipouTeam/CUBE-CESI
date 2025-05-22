@@ -11,4 +11,6 @@ jobs:
 
     steps:
       - name: Run PHPUnit tests
-        run: ./vendor/bin/phpunit tests/
+        run: |
+          ./vendor/bin/phpunit tests/
+          echo "Adios"
