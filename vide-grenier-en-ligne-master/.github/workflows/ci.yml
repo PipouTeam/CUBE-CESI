@@ -1,9 +1,9 @@
 name: CI Docker + PHPUnit
 
 on:
-  pull_request:
+  push:
     branches:
-      - dev  # ou change selon ta branche principale
+      - "*"  # ou change selon ta branche principale
 
 jobs:
   phpunit-tests:
