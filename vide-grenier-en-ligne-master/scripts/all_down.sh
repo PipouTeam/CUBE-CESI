@@ -5,5 +5,4 @@ docker compose -f docker/docker-compose.dev.yml down
 docker compose -f docker/docker-compose.stage.yml down
 docker compose -f docker/docker-compose.prod.yml down
 
-echo "Starting production environment..."
-docker compose -f docker/docker-compose.prod.yml up --build
+echo "All environments stopped successfully"
