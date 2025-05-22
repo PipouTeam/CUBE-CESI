@@ -6,4 +6,5 @@ docker compose -f docker/docker-compose.stage.yml --project-name stage down
 docker compose -f docker/docker-compose.prod.yml --project-name prod down
 
 echo "Starting production environment..."
-docker compose -f docker/docker-compose.prod.yml --project-name prod up --build -d 
+docker stack rm vide-grenier
+

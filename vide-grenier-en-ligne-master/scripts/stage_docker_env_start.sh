@@ -6,4 +6,4 @@ docker compose -f docker/docker-compose.stage.yml --project-name stage down
 docker compose -f docker/docker-compose.prod.yml --project-name prod down
 
 echo "Starting staging environment..."
-docker compose -f docker/docker-compose.stage.yml --project-name stage up --build -d 
+docker stack rm vide-grenier-stage

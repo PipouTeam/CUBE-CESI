@@ -3,7 +3,7 @@
 echo "Stopping all environments..."
 
 docker compose -f docker/docker-compose.dev.yml --project-name dev down
-docker compose -f docker/docker-compose.stage.yml --project-name stage down
-docker compose -f docker/docker-compose.prod.yml --project-name prod down
+docker stack rm vide-grenier
+docker stack rm vide-grenier-stage
 
 echo "All environments stopped successfully"

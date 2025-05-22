@@ -2,15 +2,14 @@ version: '3.8'
 
 services:
   php:
-    image: php:8.2-apache
+    image: nathlr/vide-grenier-php:latest
     ports:
       - 8002:80
     volumes:
       - ../.:/var/www/project
       - ../public:/var/www/html
-    build:
-      context: .
-      dockerfile: DockerFile
+    deploy:
+      replicas: 2
   db:
     image: mysql:8.0
     environment:
