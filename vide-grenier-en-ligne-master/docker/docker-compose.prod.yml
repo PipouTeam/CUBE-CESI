@@ -3,7 +3,6 @@ version: '3.8'
 services:
   php:
     image: php:8.2-apache
-    container_name: php82-Cube
     ports:
       - 8000:80
     volumes:
@@ -12,9 +11,10 @@ services:
     build:
       context: .
       dockerfile: DockerFile
+    deploy:
+      replicas: 3
   db:
     image: mysql:8.0
-    container_name: mysql8-Cube
     environment:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: vide-grenier 
@@ -27,7 +27,6 @@ services:
       - ../sql/prod:/docker-entrypoint-initdb.d
   phpma:
     image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin-Cube
     environment:
       PMA_ARBITRARY: 1
       PMA_HOST: db
