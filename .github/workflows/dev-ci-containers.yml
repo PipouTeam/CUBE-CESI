@@ -17,32 +17,35 @@ jobs:
         run: |
           docker compose -f vide-grenier-en-ligne-master/docker/docker-compose.dev.yml up -d --build
 
-      - name: Wait for MySQL to be ready
-        run: |
-          echo "Waiting for MySQL to be ready..."
-          until docker exec dev-db-1 mysqladmin ping -h "localhost" --silent; do 
-            sleep 2
-          done
-          echo "MySQL is ready."
-
-      - name: Wait for PHP container to be ready
-        run: |
-          echo "Waiting for PHP container to be ready..."
-          until docker exec dev-php-1 php -v > /dev/null 2>&1; do
-            sleep 2
-          done
-          echo "PHP container is ready."
-
-      - name: Wait for phpMyAdmin container to be ready
-        run: |
-          echo "Waiting for phpMyAdmin container to be ready..."
-          until docker exec dev-phpma-1 ps aux | grep -q 'apache2'; do
-            sleep 2
-          done
-          echo "phpMyAdmin container is ready."
-
       - name: List running containers
         run: docker ps
+
+      # - name: Wait for MySQL to be ready
+      #   run: |
+      #     echo "Waiting for MySQL to be ready..."
+      #     until docker exec dev-db-1 mysqladmin ping -h "localhost" --silent; do 
+      #       sleep 2
+      #     done
+      #     echo "MySQL is ready."
+
+      # - name: Wait for PHP container to be ready
+      #   run: |
+      #     echo "Waiting for PHP container to be ready..."
+      #     until docker exec dev-php-1 php -v > /dev/null 2>&1; do
+      #       sleep 2
+      #     done
+      #     echo "PHP container is ready."
+
+      # - name: Wait for phpMyAdmin container to be ready
+      #   run: |
+      #     echo "Waiting for phpMyAdmin container to be ready..."
+      #     until docker exec dev-phpma-1 ps aux | grep -q 'apache2'; do
+      #       sleep 2
+      #     done
+      #     echo "phpMyAdmin container is ready."
+
+      # - name: List running containers
+      #   run: docker ps
 
       - name: Shut down Docker containers
         run: ./vide-grenier-en-ligne-master/scripts/all_stop.sh
