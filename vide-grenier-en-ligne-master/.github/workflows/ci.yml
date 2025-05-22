@@ -3,7 +3,8 @@ name: CI Docker + PHPUnit
 on:
   push:
     branches:
-      - '**'    # ou change selon ta branche principale
+      - 92-create-ci-pipeline-with-github-actions
+    # ou change selon ta branche principale
 
 jobs:
   phpunit-tests:
