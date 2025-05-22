@@ -1,0 +1,14 @@
+name: PHPUnit tests
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  run-phpunit-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run PHPUnit tests
+        run: ./vendor/bin/phpunit tests/
