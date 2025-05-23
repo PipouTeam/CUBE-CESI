@@ -32,3 +32,8 @@ jobs:
         run: |
           cd vide-grenier-en-ligne-master
           ./scripts/all_run.sh
+
+      - name: Shut down Docker containers
+        run: |
+          cd vide-grenier-en-ligne-master
+          ./scripts/all_down.sh
