@@ -1,0 +1,38 @@
+name: Push on Docker Hub and deploy
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7  # Timeout global pour le job (15 minutes)
+
+    steps:
+      - name: Checkout code ok
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub with token
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker images
+        run: |
+          cd vide-grenier-en-ligne-master
+          docker build -t nathlr/vide-grenier-php:latest -f docker/DockerFile .
+
+      - name: Push Docker images
+        run: |
+          docker push nathlr/vide-grenier-php:latest
+
+      - name: Deploy stage and prod
+        run: |
+          cd vide-grenier-en-ligne-master
+          ./scripts/all_run.sh
+
+      - name: Shut down Docker containers
+        run: |
+          cd vide-grenier-en-ligne-master
+          ./scripts/all_down.sh
