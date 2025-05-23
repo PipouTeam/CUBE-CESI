@@ -9,6 +9,7 @@ docker stack rm vide-grenier-stage
 
 echo "Start all environments..."
 
+chmod -R 777 public/storage
 docker stack deploy -c docker/docker-compose.prod.yml vide-grenier
 docker stack deploy -c docker/docker-compose.stage.yml vide-grenier-stage
 docker compose -f docker/docker-compose.dev.yml --project-name dev up --build -d 
