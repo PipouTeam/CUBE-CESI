@@ -21,12 +21,10 @@ jobs:
         run: |
           cd vide-grenier-en-ligne-master
           docker build -t nathlr/vide-grenier-php:latest -f docker/DockerFile .
-          docker build -t nathlr/vide-grenier-php:enora -f docker/DockerFile .
 
       - name: Push Docker images
         run: |
           docker push nathlr/vide-grenier-php:latest
-          docker push nathlr/vide-grenier-php:enora
 
       - name: Deploy stage and prod
         run: |
