@@ -67,4 +67,4 @@ jobs:
         run: docker ps
 
       - name: Shut down Docker containers
-        run: ./vide-grenier-en-ligne-master/scripts/all_stop.sh
+        run: ./scripts/all_stop.sh
