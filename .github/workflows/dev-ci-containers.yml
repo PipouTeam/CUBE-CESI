@@ -15,8 +15,8 @@ jobs:
 
       - name: Start Docker containers
         run: |
-          cd vide-grenier-en-ligne-master/scripts
-          ./dev_docker_env_start.sh
+          cd vide-grenier-en-ligne-master
+          ./scripts/dev_docker_env_start.sh
 
       - name: Check Docker containers
         run: docker ps
