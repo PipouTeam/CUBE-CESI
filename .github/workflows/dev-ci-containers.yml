@@ -3,7 +3,7 @@ name: Containers checking
 on:
   push:
     branches:
-      - "**"
+      - dev
 
 jobs:
   check-docker-containers:
