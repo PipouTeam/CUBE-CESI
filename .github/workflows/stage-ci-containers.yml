@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15  # Timeout global pour le job (15 minutes)
+    timeout-minutes: 7  # Timeout global pour le job (15 minutes)
 
     steps:
       - name: Checkout code ok
