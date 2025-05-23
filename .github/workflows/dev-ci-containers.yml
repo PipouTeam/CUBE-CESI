@@ -15,34 +15,58 @@ jobs:
 
       - name: Start Docker containers
         run: |
-          docker compose -f vide-grenier-en-ligne-master/docker/local/docker-compose.dev.yml up -d --build
+          cd vide-grenier-en-ligne-master
+          ./scripts/dev_docker_env_start.sh
+
+      - name: Check Docker containers
+        run: docker ps
 
       - name: Wait for MySQL to be ready
         run: |
-          echo "Waiting for MySQL to be ready..."
-          until docker exec mysql8-Cube mysqladmin ping -h "localhost" --silent; do 
+          echo "Waiting for MySQL to be ready (timeout: 120s)..."
+          timeout=120
+          while ! docker exec dev-db-1 mysqladmin ping -h "localhost" --silent; do
             sleep 2
+            timeout=$((timeout - 2))
+            if [ $timeout -le 0 ]; then
+              echo "MySQL did not become ready in time."
+              exit 1
+            fi
           done
           echo "MySQL is ready."
 
       - name: Wait for PHP container to be ready
         run: |
-          echo "Waiting for PHP container to be ready..."
-          until docker exec php82-Cube php -v > /dev/null 2>&1; do
+          echo "Waiting for PHP container to be ready (timeout: 120s)..."
+          timeout=120
+          while ! docker exec dev-php-1 php -v > /dev/null 2>&1; do
             sleep 2
+            timeout=$((timeout - 2))
+            if [ $timeout -le 0 ]; then
+              echo "PHP container did not become ready in time."
+              exit 1
+            fi
           done
           echo "PHP container is ready."
 
-      - name: Wait for phpMyAdmin to be ready
+      - name: Wait for phpMyAdmin container to be ready
         run: |
-          echo "Waiting for phpMyAdmin to be ready..."
-          until curl -s http://localhost:8899 | grep -q "phpMyAdmin"; do
+          echo "Waiting for phpMyAdmin container to be ready (timeout: 120s)..."
+          timeout=120
+          while ! docker exec dev-phpma-1 ps aux | grep -q 'apache2'; do
             sleep 2
+            timeout=$((timeout - 2))
+            if [ $timeout -le 0 ]; then
+              echo "phpMyAdmin container did not become ready in time."
+              exit 1
+            fi
           done
-          echo "phpMyAdmin is ready."
+          echo "phpMyAdmin container is ready."
 
       - name: List running containers
         run: docker ps
 
       - name: Shut down Docker containers
-        run: ./vide-grenier-en-ligne-master/scripts/all_stop.sh
+        run: |
+          cd vide-grenier-en-ligne-master
+          ./scripts/all_down.sh
