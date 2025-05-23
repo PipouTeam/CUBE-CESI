@@ -25,6 +25,6 @@ jobs:
 
       - name: Run PHPUnit tests
         run: |
-          ./vide-grenier-en-ligne-master/vendor/bin/phpunit vide-grenier-en-ligne-master/tests/
-          echo "Adios"
-
+          echo "Running PHPUnit tests with timeout of 350s..."
+          timeout 350s ./vide-grenier-en-ligne-master/vendor/bin/phpunit vide-grenier-en-ligne-master/tests/
+          echo "Tests finished or timed out."
