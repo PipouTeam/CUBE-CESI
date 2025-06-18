@@ -62,3 +62,5 @@ Ensuite pour lancer le projet on a qu'a faire :
 (Le build sert a build le Dockerfile)
 
 On a par la suite creer les differents environnement pour notre phase de stage et de prod en rajoutant dans le dockerfile la recuperation du projet depuis git au niveau de la branch main.
+
+test
