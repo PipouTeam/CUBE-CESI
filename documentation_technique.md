@@ -181,7 +181,108 @@ Le projet utilise GitHub Actions pour l'intégration continue :
 
 ## 10. Tests
 
-Le projet inclut des tests unitaires dans le répertoire `tests/`.
+Le projet inclut des tests unitaires dans le répertoire `tests/`. Ces tests sont organisés par domaine fonctionnel et utilisent PHPUnit comme framework de test.
+
+### 10.1 Structure des Tests
+
+Les tests sont organisés selon la structure suivante :
+
+```
+tests/
+├── Article/                    # Tests pour le modèle Article
+│   ├── ArticleCreationTest.php # Tests de création d'articles
+│   ├── ArticleRetrievalTest.php # Tests de récupération d'articles
+│   ├── ArticleStatisticsTest.php # Tests des statistiques d'articles
+│   └── README.md               # Documentation des tests d'articles
+├── User/                       # Tests pour le modèle User
+│   ├── UserCreationTest.php    # Tests de création d'utilisateurs
+│   ├── UserAuthenticationTest.php # Tests d'authentification
+│   └── README.md               # Documentation des tests utilisateurs
+├── Utility/                    # Tests pour les classes utilitaires
+│   └── README.md               # Documentation des tests utilitaires
+├── Probleme-Test-Vendor.md     # Documentation des problèmes connus
+└── tuto_TESTS.md               # Tutoriel d'utilisation des tests
+```
+
+### 10.2 Méthodologie de Test
+
+Les tests unitaires suivent une approche d'isolation en utilisant des mocks pour simuler les dépendances externes comme la base de données. Cette approche permet :
+
+- Des tests rapides et fiables
+- L'indépendance vis-à-vis d'une base de données réelle
+- La possibilité de tester des cas limites et des conditions d'erreur
+
+Exemple de configuration d'un test avec mock de PDO :
+
+```php
+protected function setUp(): void {
+    $this->mockPDO = $this->createMock(\PDO::class);
+    $this->mockStatement = $this->createMock(\PDOStatement::class);
+    $this->mockPDO->method('prepare')->willReturn($this->mockStatement);
+    Articles::setDBForTests($this->mockPDO);
+}
+```
+
+### 10.3 Tests des Modèles
+
+#### 10.3.1 Tests du Modèle Article
+
+Les tests du modèle Article sont divisés en trois catégories principales :
+
+1. **ArticleCreationTest** : Tests pour la création et la mise à jour d'articles
+   - Création d'articles avec données valides
+   - Attachement d'images aux articles
+   - Gestion des erreurs (champs manquants, caractères spéciaux)
+
+2. **ArticleRetrievalTest** : Tests pour la récupération d'articles
+   - Récupération d'articles par utilisateur
+   - Récupération d'articles par ID
+   - Filtrage des articles
+
+3. **ArticleStatisticsTest** : Tests pour les statistiques d'articles
+   - Incrémentation du compteur de vues
+
+#### 10.3.2 Tests du Modèle User
+
+Les tests du modèle User couvrent :
+
+1. **UserCreationTest** : Tests pour la création d'utilisateurs
+   - Création d'utilisateurs avec données valides
+   - Validation des données utilisateur (email, nom d'utilisateur)
+   - Gestion des erreurs (doublons, données manquantes)
+
+2. **UserAuthenticationTest** : Tests pour l'authentification
+   - Connexion utilisateur
+   - Vérification des mots de passe
+   - Gestion des sessions
+
+### 10.4 Exécution des Tests
+
+Pour exécuter tous les tests du projet :
+
+```bash
+./vendor/bin/phpunit tests/
+```
+
+Pour exécuter une catégorie spécifique de tests :
+
+```bash
+./vendor/bin/phpunit tests/Article/
+```
+
+Pour exécuter un fichier de test spécifique :
+
+```bash
+./vendor/bin/phpunit tests/Article/ArticleCreationTest.php
+```
+
+### 10.5 Couverture de Code
+
+Les tests actuels couvrent les fonctionnalités de base des modèles principaux. Des améliorations sont prévues pour augmenter la couverture de code, notamment :
+
+- Tests des contrôleurs
+- Tests d'intégration
+- Tests de bout en bout (end-to-end)
 
 ## 11. Sécurité
 
